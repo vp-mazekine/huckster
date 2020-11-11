@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.4.0"
     kotlin("kapt") version "1.4.10"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
     application
     java
 }
@@ -74,5 +75,16 @@ compileTestKotlin.kotlinOptions {
 }
 
 tasks.jar {
-    archiveFileName.set("huckster.jar")
+    archiveBaseName.set("huckster")
+    archiveVersion.set("")
+    archiveClassifier.set("")
+    archiveExtension.set("jar")
+}
+
+tasks.shadowJar {
+    archiveBaseName.set("hucksterFat")
+    archiveVersion.set("")
+    archiveClassifier.set("")
+    archiveExtension.set("jar")
+    minimize()
 }

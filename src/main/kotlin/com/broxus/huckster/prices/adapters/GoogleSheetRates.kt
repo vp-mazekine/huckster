@@ -89,7 +89,7 @@ class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): Pri
         var toCurrency: String
         var rate: Float?
         var r: Rate
-        var i: Int? = null
+        var i: Int?
 
         if(result.isNullOrEmpty()) {
             logger2("Empty price feed from the Google Sheet...".red())
