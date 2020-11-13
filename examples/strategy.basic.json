@@ -1,0 +1,93 @@
+{
+	"account": {
+		"userAddress": "hello@example.com",
+		"addressType": "email",
+		"workspaceId": "112695f5-8ba9-44c9-8083-e618939d5079"
+	},
+	"configuration": {
+		"adapter": "basic",
+		"sourceCurrency": "TON",
+		"volumeLimit": "0.9",
+		"hardFloor": null,
+		"refreshInterval": {
+			"soft": "30",
+			"hard": "300"
+		},
+		"placementOffset": [
+			{
+				"volumePart": "0.5",
+				"offset": "0"
+			},
+			{
+				"volumePart": "0.5",
+				"offset": "15"
+			}
+		],
+		"minOrderSize": "0.1"
+	},
+	"strategies": [
+		{
+			"targetCurrency": "BTC",
+			"volumePart": "0.75",
+			"orderbookFee": {
+				"size": "0.001",
+				"units": "relative",
+				"currency": "target"
+			},
+			"sizeStructure": [
+				"0.1",
+				"0.2",
+				"0.3",
+				"0.4"
+			],
+			"spreadStructure": [
+				"0.10",
+				"0.12",
+				"0.15",
+				"0.2"
+			]
+		},
+		{
+			"targetCurrency": "USDT",
+			"volumePart": "0.15",
+			"orderbookFee": {
+				"size": "0.001",
+				"units": "relative",
+				"currency": "target"
+			},
+			"sizeStructure": [
+				"0.1",
+				"0.2",
+				"0.3",
+				"0.4"
+			],
+			"spreadStructure": [
+				"0.10",
+				"0.12",
+				"0.15",
+				"0.2"
+			]
+		},
+		{
+			"targetCurrency": "USDC",
+			"volumePart": "0.1",
+			"orderbookFee": {
+				"size": "0.001",
+				"units": "relative",
+				"currency": "target"
+			},
+			"sizeStructure": [
+				"0.1",
+				"0.2",
+				"0.3",
+				"0.4"
+			],
+			"spreadStructure": [
+				"0.10",
+				"0.12",
+				"0.15",
+				"0.2"
+			]
+		}
+	]
+}

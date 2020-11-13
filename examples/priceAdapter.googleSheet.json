@@ -1,0 +1,9 @@
+{
+	"adapter": "googleSheet",
+	"configuration": {
+		"refreshRate": "60",
+		"sheetId": "1k4So5sVGpCmtRKdsINnArtaq3t-aghxxKK-bk3Ro1XU",
+		"sourceDataSheet": "Rates",
+		"sourceDataRange": "A2:C13"
+	}
+}

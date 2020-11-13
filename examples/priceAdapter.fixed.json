@@ -1,0 +1,27 @@
+{
+	"adapter": "fixed",
+	"configuration": {
+		"rates": [
+			{
+				"fromCurrency": "TON",
+				"toCurrency": "USD",
+				"rate": "1.4"
+			},
+			{
+				"fromCurrency": "TON",
+				"toCurrency": "BTC",
+				"rate": "0.00014"
+			},
+			{
+				"fromCurrency": "TON",
+				"toCurrency": "USDT",
+				"rate": "1.4"
+			},
+			{
+				"fromCurrency": "TON",
+				"toCurrency": "USDC",
+				"rate": "1.4"
+			}
+		]
+	}
+}
