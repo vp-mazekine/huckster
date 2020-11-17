@@ -1,6 +1,5 @@
-package com.broxus
+package com.broxus.huckster
 
-import com.broxus.huckster.OrdersQueue
 import com.broxus.huckster.models.StrategyInput
 import com.broxus.huckster.prices.adapters.FixedRate
 import com.broxus.huckster.prices.adapters.GoogleSheetRates
@@ -9,14 +8,16 @@ import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.models.ApiConfig
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.importre.crayon.*
+import com.broxus.utils.*
 import kotlinx.coroutines.runBlocking
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory.getLogger
 import java.io.File
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
 import java.time.LocalDateTime.now
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -25,6 +26,8 @@ fun main(args: Array<String>) {
     var strategyPath = ""
     var priceAdapterPath = ""
     var priceAuthPath = ""
+    var base = ""
+    var counter = ""
 
     val greeting =
         "                                                                  \n" +
@@ -40,11 +43,13 @@ fun main(args: Array<String>) {
         "USAGE:\n".brightGreen() +
         "\thuckster " + "<JOB> ".green() + "[PARAMS]\n".yellow() +
         "\t\n" +
-        "\tJobs:\n".green() +
+        "\tJOBS:\n".green() +
         "\t\t" + "buyer".italic() + "\t\t\t\t\t\tBuy at the lowest possible price\n" +
         "\t\t" + "seller".italic() + "\t\t\t\t\t\tSell at the highest possible price\n" +
+        "\t\t" + "orderbook".italic() + "\t\t\t\t\tDisplay available orderbook\n" +
         "\t\n" +
-        "\tParameters:\n".yellow() +
+        "\tPARAMETERS:\n".yellow() +
+        "\tOrders placement:\n".underline() +
         "\t\t-k, --keys <FILE>".italic() +
                 "\t\t\tKeys to access Broxus Nova platform\n" +
         "\t\t-s, --strategy <FILE>".italic() +
@@ -52,22 +57,21 @@ fun main(args: Array<String>) {
         "\t\t-pad, --priceAdapter <FILE>".italic() +
                 "\tPrice adapter configuration\n" +
         "\t\t-pau, --priceAuth <FILE>".italic() +
-                "\tPrice adapter authentication file [optional]\n"
+                "\tPrice adapter authentication file [optional]\n\n" +
+        "\tOrderbook:\n".underline() +
+        "\t\t-p, --pair <PAIR>".italic() +
+                "\t\t\tBase and counter currency tickers separated by a delimiter.\n" +
+                "\t\t\t\t\t\t\t\t\tSupported delimiters: underscore(_), dash(-) and slash (/)"
 
     val errors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
     //  Parse command line arguments
     var i = 0
     while(i <= args.lastIndex) {
-        when(args[i]) {
-            //  Subsommand
-            "seller", "buyer" -> {
-                if(args[i] == "buyer") {
-                    logger2(("buyer".italic() + " job is not yet supported. Terminating now...").red())
-                    exitProcess(-1)
-                }
-
-                command = args[i]
+        when(args[i].toLowerCase()) {
+            //  Subcommand
+            "seller", "buyer", "orderbook" -> {
+                command = args[i].toLowerCase()
             }
 
             //  Configuration to connect to Broxus
@@ -101,7 +105,7 @@ fun main(args: Array<String>) {
             }
 
             //  Configuration of the price adapter
-            "--priceAdapter", "-pad" -> {
+            "--priceadapter", "-pad" -> {
                 if(i < args.lastIndex) {
                     if(File(args[i + 1]).exists()){
                         priceAdapterPath = args[i + 1]
@@ -116,7 +120,7 @@ fun main(args: Array<String>) {
             }
 
             //  Configuration of the price adapter
-            "--priceAuth", "-pau" -> {
+            "--priceauth", "-pau" -> {
                 if(i < args.lastIndex) {
                     if(File(args[i + 1]).exists()){
                         priceAuthPath = args[i + 1]
@@ -124,6 +128,23 @@ fun main(args: Array<String>) {
                         if(!errors.containsKey("wrong_file")) errors["wrong_file"] = mutableListOf()
 
                         errors["wrong_file"]?.add(args[i+1].red())
+                    }
+
+                    i++
+                }
+            }
+
+            "--pair", "-p" -> {
+                if(i < args.lastIndex) {
+                    args[i + 1].split("/", "-", "_", ignoreCase = true, limit = 2).also {
+                        if(it.count() == 2) {
+                            base = it[0].toUpperCase()
+                            counter = it[1].toUpperCase()
+                        } else {
+                            if(!errors.containsKey("wrong_orderbook")) errors["wrong_orderbook"] = mutableListOf()
+
+                            errors["wrong_orderbook"]?.add("Wrong number of arguments to display orderbook")
+                        }
                     }
 
                     i++
@@ -144,29 +165,34 @@ fun main(args: Array<String>) {
         i++
     }
 
-    if(command == "") {
-        if(!errors.containsKey("job")) errors["job"] = mutableListOf()
-
-        errors["job"]?.add("No job was specified")
+    when(command) {
+        "" -> {
+            if(!errors.containsKey("job")) errors["job"] = mutableListOf()
+            errors["job"]?.add("No job was specified")
+        }
+        "buyer" -> {
+            if(!errors.containsKey("job")) errors["job"] = mutableListOf()
+            errors["job"]?.add("buyer".italic() + " job is not yet supported")
+        }
     }
 
-
     if(keysPath == "") {
-        if(!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
-
+        if (!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
         errors["parameter"]?.add("-k, --keys <KEYS_FILE>")
     }
 
-    if(strategyPath == "") {
-        if(!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
+    when(command) {
+        "buyer", "seller" -> {
+            if(strategyPath == "") {
+                if (!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
+                errors["parameter"]?.add("-s, --strategy <FILE>")
+            }
 
-        errors["parameter"]?.add("-s, --strategy <FILE>")
-    }
-
-    if(priceAdapterPath == "") {
-        if(!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
-
-        errors["parameter"]?.add("-p, --priceAdapter <FILE>")
+            if(priceAdapterPath == "") {
+                if(!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
+                errors["parameter"]?.add("-p, --priceAdapter <FILE>")
+            }
+        }
     }
 
     if(errors.count() > 0) {
@@ -174,24 +200,27 @@ fun main(args: Array<String>) {
             "ERRORS:".brightRed()
 
         errors.forEach{(key, value) ->
+            if(value.isNotEmpty())
             errorMessage += "\n\t- " +
-                    when(key) {
-                        "job" -> {
-                            "Job was not specified"
-                        }
-                        "parameter" -> {
-                            "Required argument(s) not specified:\n" +
-                                    value.joinToString("\n") { "\t\t$it".red() }
-                        }
-                        "wrong_file" -> {
-                            "Indicated files were not found:\n" +
-                                    value.joinToString("\n") { "\t\t$it".red() }
-                        }
-                        else -> {
-                            "Don't know what to do with this:\n" +
-                                    value.joinToString("\n") { "\t\t$it".red() }
-                        }
+                when(key) {
+                    "job" -> {
+                        "Incorrect job configuration:"
                     }
+                    "parameter" -> {
+                        "Required argument(s) not specified:"
+                    }
+                    "wrong_file" -> {
+                        "Indicated files were not found:"
+                    }
+                    "wrong_orderbook" -> {
+                        "Incorrect orderbook configuration:"
+                    }
+                    else -> {
+                        "Don't know what to do with this:"
+                    }
+                } + "\n" +
+                value.joinToString("\n") { "\t\t$it".red() }
+
         }
 
         println(errorMessage + "\n\n" + usage)
@@ -199,7 +228,9 @@ fun main(args: Array<String>) {
     }
 
     println(greeting)
-    println("\nWelcome to Huckster!\nInitiating...\n")
+    println("\nWelcome to Huckster!\nInitiating...")
+
+    val startTime = System.currentTimeMillis()
 
     //  Create JSON parser
     val gson = GsonBuilder().setLenient().create()
@@ -216,50 +247,67 @@ fun main(args: Array<String>) {
     //  Initialize orders queue
     OrdersQueue.init(NovaApiService)
 
-    //  Initialize rates adapter
-    val priceFeedConfiguration = gson.fromJson(
-        File(priceAdapterPath).bufferedReader(),
-        JsonObject::class.java
-    )
-
-    val priceAdapter = try {
-            when(priceFeedConfiguration["adapter"].asString) {
-                "fixed"         -> FixedRate(priceFeedConfiguration)
-                "googleSheet" -> {
-                    if(!File(priceAuthPath).exists()) throw(Exception("Authentication file for Google Sheet price adapter doesn't exist. Terminating now..."))
-                    GoogleSheetRates(priceFeedConfiguration, priceAuthPath)
-                }
-                else            -> {
-                    throw(Exception("Unknown price adapter (${priceFeedConfiguration["adapter"]}). Terminating now..."))
-                }
-            }
-        } catch(e: Exception) {
-            logger2(e.stackTrace.joinToString("\n").red())
-            exitProcess(-1)
-        }
-
-
-    //  Load strategy configuration
-    val strategyConfiguration: StrategyInput = gson.fromJson(
-        File(strategyPath).bufferedReader(),
-        StrategyInput::class.java
-    )
-
-    val strategyAdapter = try {
-        when(strategyConfiguration.configuration.adapter) {
-            "basic" -> BasicStrategy(strategyConfiguration, priceAdapter)
-            else -> {
-                throw(Exception("Unknown strategy adapter (${strategyConfiguration.configuration.adapter}). Terminating now..."))
+    when(command) {
+        "orderbook" -> {
+            try {
+                runBlocking { OrdersQueue.drawOrderBook(base, counter, 10) }
+            } catch(e: Exception) {
+                logger2(e.message + "\n" +
+                    e.stackTrace.joinToString("\n").red())
+                exitProcess(-1)
             }
         }
-    } catch(e: Exception) {
-        logger2(e.stackTrace.joinToString("\n").red())
-        exitProcess(-1)
-    }
 
-    //  Launch orders placement
-    runBlocking {
-        strategyAdapter.run()
+        "buyer", "seller" -> {
+            //  Initialize rates adapter
+            val priceFeedConfiguration = gson.fromJson(
+                File(priceAdapterPath).bufferedReader(),
+                JsonObject::class.java
+            )
+
+            val priceAdapter = try {
+                when(priceFeedConfiguration["adapter"].asString) {
+                    "fixed"         -> FixedRate(priceFeedConfiguration)
+                    "googleSheet" -> {
+                        if(!File(priceAuthPath).exists()) throw(Exception("Authentication file for Google Sheet price adapter doesn't exist. Terminating now..."))
+                        GoogleSheetRates(priceFeedConfiguration, priceAuthPath)
+                    }
+                    else            -> {
+                        throw(Exception("Unknown price adapter (${priceFeedConfiguration["adapter"]}). Terminating now..."))
+                    }
+                }
+            } catch(e: Exception) {
+                logger2(e.stackTrace.joinToString("\n").red())
+                exitProcess(-1)
+            }
+
+            //  Load strategy configuration
+            val strategyConfiguration: StrategyInput = gson.fromJson(
+                File(strategyPath).bufferedReader(),
+                StrategyInput::class.java
+            )
+
+            val strategyAdapter = try {
+                when(strategyConfiguration.configuration.adapter) {
+                    "basic" -> BasicStrategy(strategyConfiguration, priceAdapter)
+                    else -> {
+                        throw(Exception("Unknown strategy adapter (${strategyConfiguration.configuration.adapter}). Terminating now..."))
+                    }
+                }
+            } catch(e: Exception) {
+                logger2(e.stackTrace.joinToString("\n").red())
+                exitProcess(-1)
+            }
+
+            val launchTime = Date(System.currentTimeMillis() - startTime)
+            println("huckster".italic() + " launched in " +
+                    SimpleDateFormat("HH:mm:ss.SSS").apply{
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }.format(launchTime)
+            )
+
+            runBlocking { strategyAdapter.run() }
+        }
     }
 }
 

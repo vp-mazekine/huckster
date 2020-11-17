@@ -5,11 +5,11 @@ import com.broxus.huckster.interfaces.PriceFeed
 import com.broxus.huckster.interfaces.Strategy
 import com.broxus.huckster.models.PlaceOrderEvent
 import com.broxus.huckster.models.StrategyInput
-import com.broxus.logger2
+import com.broxus.huckster.logger2
 import com.broxus.nova.client.NovaApiService
-import com.importre.crayon.green
-import com.importre.crayon.red
-import com.importre.crayon.yellow
+import com.broxus.utils.green
+import com.broxus.utils.red
+import com.broxus.utils.yellow
 import kotlinx.coroutines.*
 import kotlin.system.exitProcess
 
@@ -60,7 +60,7 @@ class BasicStrategy(
                     exitProcess(-1)
                 }
 
-                logger2("Eligible balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
+                logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
 
                 var remainingBalance = availableBalance
 
@@ -90,7 +90,7 @@ class BasicStrategy(
 
                             if (basePrice == null) return@size
 
-                            logger2("Basic exchange price: 1 ${strategy.configuration.sourceCurrency} = $basePrice ${s.targetCurrency}")
+                            //logger2("Basic exchange price: 1 ${strategy.configuration.sourceCurrency} = $basePrice ${s.targetCurrency}")
 
                             val toAmount = fromAmount * basePrice!! *
                                     (1.0F + s.spreadStructure[index].toFloat()) //  TODO: Add a check if spread and size structure are of a different length

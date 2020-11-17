@@ -3,9 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.4.0"
     kotlin("kapt") version "1.4.10"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
     application
     java
+    id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 group = "com.broxus"
@@ -42,7 +42,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.51")
 
     //  Console utils
-    implementation("com.importre:crayon:0.1.0")
+    //implementation("com.importre:crayon:0.1.0")
 
     //  Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1")
@@ -52,6 +52,8 @@ dependencies {
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.30.6")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20200922-1.30.10")
 
+    //  System utils
+    implementation("org.apache.commons:commons-lang3:3.11")
 }
 
 tasks.withType<KotlinCompile>() {
@@ -61,7 +63,8 @@ tasks.withType<KotlinCompile>() {
 }
 
 application {
-    mainClassName = "com.broxus.MainKt"
+    mainClassName = "com.broxus.huckster.MainKt"    //  Have to leave it here until shadowJar fixes the compatibility bug
+    mainClass.set("com.broxus.huckster.MainKt")
 }
 
 val compileKotlin: KotlinCompile by tasks

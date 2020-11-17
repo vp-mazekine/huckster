@@ -3,7 +3,7 @@ package com.broxus.nova.client
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
-import com.broxus.logger2
+import com.broxus.huckster.logger2
 import com.broxus.nova.client.interfaces.NovaApiInterface
 import com.broxus.nova.models.*
 import com.broxus.nova.types.AddressType
@@ -14,8 +14,8 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
-import com.importre.crayon.green
-import com.importre.crayon.red
+import com.broxus.utils.green
+import com.broxus.utils.red
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import retrofit2.Response
@@ -465,4 +465,43 @@ object NovaApiService {
 
         return result.isSuccessful
     }
+
+    fun getOrderBook(
+        base: String,
+        counter: String,
+        workspaceId: String? = null
+    ): ExchangeOrderBook? {
+
+        val result: Response<JsonObject>
+
+        try {
+            //  Input model for the REST call
+            val input = ExchangeOrderBookInput(workspaceId, base, counter)
+
+            //  Prepare the request signature
+            val (nonce, signature) = sign(
+                "/v1/exchange/order_book",
+                gson!!.toJson(input).toString()
+            )
+
+            //  Perform request
+            result = api!!.getOrderBook(input, apiConfig!!.apiKey, nonce, signature).execute()
+        } catch(e: Exception) {
+            logger.error("Nova API service was not properly initialized!", e)
+            return null
+        }
+
+        //  Transform server response
+        unfoldResponse(result, ExchangeOrderBook::class.java).apply {
+            return when(this) {
+                is Either.Right -> this.b
+                is Either.Left -> {
+                    logger.error(this.a.toString())
+                    null
+                }
+                else -> null
+            }
+        }
+    }
+
 }

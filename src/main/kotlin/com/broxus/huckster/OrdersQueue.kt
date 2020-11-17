@@ -2,14 +2,18 @@ package com.broxus.huckster
 
 import com.broxus.huckster.interfaces.OrdersQueue
 import com.broxus.huckster.models.PlaceOrderEvent
-import com.broxus.logger2
 import com.broxus.nova.client.NovaApiService
+import com.broxus.nova.models.ExchangeOrderBook
 import com.broxus.nova.types.AddressType
 import com.broxus.nova.types.OrderSideType
-import com.importre.crayon.*
+import com.broxus.utils.*
 import kotlinx.coroutines.delay
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.Integer.max
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -33,8 +37,10 @@ object OrdersQueue: OrdersQueue {
         )?.let {
 
             logger2(
-                "[$threadId] Order ${it.transactionId} placed: ".recolorByThread(threadId) +
-                        "${event.fromAmount} ${event.fromCurrency} --> ${event.toAmount} ${event.toCurrency}")
+                "[$threadId] Order ${it.transactionId}: ".recolorByThread(threadId) +
+                "${event.fromAmount} ${event.fromCurrency} --> ${event.toAmount} ${event.toCurrency} " +
+                "[1 ${event.fromCurrency} = ${(event.toAmount.toFloat() / event.fromAmount.toFloat())} ${event.toCurrency}]".blue()
+            )
             delay(event.cancelDelay)
 
             val sequentialOrder: PlaceOrderEvent = event
@@ -110,6 +116,133 @@ object OrdersQueue: OrdersQueue {
         return true
     }
 
+    override suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Long) {
+        var orderBook: ExchangeOrderBook?
+        var averagePrice: Float = 0.0F
+        var priceMaxLength: Int = 0
+        var volumeMaxLength: Int = 0
+        var minAskPrice: Float
+        var maxBidPrice: Float
+        var minVolume: Float = 0.0F
+        var maxVolume: Float = 0.0F
+        var priceColumnWidth: Int
+        var volumeColumnWidth: Int
+        val format = DecimalFormat(
+            "# ##0.00######",
+            DecimalFormatSymbols(Locale("en", "US")).apply {
+                decimalSeparator = '.'
+                groupingSeparator = ' '
+            }
+        ).apply {
+            roundingMode = RoundingMode.HALF_UP
+        }
+        var outMessage: String = ""
+        val minScale = 1.0F
+        val maxScale = 11.0F
+        var interval: Float
+        var bars: Int
+        var t: String = ""
+
+        while(true) {
+            orderBook = api!!.getOrderBook(base, counter)
+            orderBook?.let {
+                minAskPrice = 0.0F
+                it.asks.forEach {ask ->
+                    if((minAskPrice == 0.0F) || (minAskPrice > ask.rate.toFloat())) {
+                        minAskPrice = ask.rate.toFloat()
+                    }
+
+                    if(ask.rate.length > priceMaxLength) priceMaxLength = ask.rate.length
+                    if(ask.volume.length > volumeMaxLength) volumeMaxLength = ask.volume.length
+
+                    if(ask.volume.toFloat() > maxVolume) maxVolume = ask.volume.toFloat()
+                    if((minVolume == 0.0F) || (ask.volume.toFloat() < minVolume)) minVolume = ask.volume.toFloat()
+                }
+
+                maxBidPrice = 0.0F
+                it.bids.forEach {bid ->
+                    if((maxBidPrice == 0.0F) || (maxBidPrice < bid.rate.toFloat())) {
+                        maxBidPrice = bid.rate.toFloat()
+                    }
+
+                    if(bid.rate.length > priceMaxLength) priceMaxLength = bid.rate.length
+                    if(bid.volume.length > volumeMaxLength) volumeMaxLength = bid.volume.length
+
+                    if(bid.volume.toFloat() > maxVolume) maxVolume = bid.volume.toFloat()
+                    if((minVolume == 0.0F) || (bid.volume.toFloat() < minVolume)) minVolume = bid.volume.toFloat()
+                }
+
+                averagePrice = when {
+                    (minAskPrice == 0.0F) && (maxBidPrice == 0.0F) -> 0.0F
+                    (maxBidPrice == 0.0F) -> minAskPrice
+                    (minAskPrice == 0.0F) -> maxBidPrice
+                    else -> (minAskPrice + maxBidPrice) / 2
+                }
+
+                //  Clear console
+                //print("\b".repeat(outMessage.length))
+                //print(13.toChar())
+                //print("\u001b[H\u001b[2J")
+                //Runtime.getRuntime().exec("echo 'something'")
+                print("\n".repeat(100))
+                //print("\u001B[10E")
+                //print(13.toChar())
+                //println("\u001Bc")
+
+                priceColumnWidth = max(priceMaxLength, 5) + 2
+                volumeColumnWidth = 11 + volumeMaxLength + 3
+
+                interval = (maxVolume - minVolume) / (maxScale - minScale)
+
+                //  Header
+                outMessage =
+                    "┌" + "─".repeat(priceColumnWidth) + "┬" + "─".repeat(volumeColumnWidth) + "┐\n" +
+                    "│ " + "Price".bold() + " ".repeat(priceColumnWidth - 6) + "│ " + "Volume".bold() + " ".repeat(volumeColumnWidth - 7) + "│\n" +
+                    "├" + "─".repeat(priceColumnWidth) + "┼" + "─".repeat(volumeColumnWidth) + "┤\n"
+
+                //  Asks chart
+                it.asks.take(10).asReversed().forEach { ask ->
+                    bars = ((ask.volume.toFloat() - minVolume) / interval).toInt() + 1
+                    outMessage +=
+                        "│ " + ask.rate + " ".repeat(priceColumnWidth - ask.rate.length - 1) + "│ " +
+                        "█".repeat(bars).red() + " " + ask.volume.red() + " ".repeat(volumeColumnWidth - bars - ask.volume.length - 2) + "│\n"
+                }
+
+                if(it.asks.count() == 0) {
+                    outMessage +=
+                        "│ " + "Empty asks orderbook".red() + " ".repeat(priceColumnWidth + volumeColumnWidth + 1 - 21) + "│\n"
+                }
+
+                //  Average price separator
+                t = format.format(averagePrice) + " $base/$counter"
+                outMessage +=
+                    "├" + "─".repeat(priceColumnWidth) + "┴" + "─".repeat(volumeColumnWidth) + "┤\n" +
+                    "│ " + t.italic() + " ".repeat(priceColumnWidth + volumeColumnWidth - t.length) + "│\n" +
+                    "├" + "─".repeat(priceColumnWidth) + "┬" + "─".repeat(volumeColumnWidth) + "┤\n"
+
+                //  Bids chart
+                it.bids.take(10).asReversed().forEach { bid ->
+                    bars = ((bid.volume.toFloat() - minVolume) / interval).toInt() + 1
+                    outMessage +=
+                        "│ " + bid.rate + " ".repeat(priceColumnWidth - bid.rate.length - 1) + "│ " +
+                        "█".repeat(bars).green() + " " + bid.volume.green() + " ".repeat(volumeColumnWidth - bars - bid.volume.length - 2) + "│\n"
+                }
+
+                if(it.bids.count() == 0) {
+                    outMessage +=
+                        "│ " + "Empty bids orderbook".green() + " ".repeat(priceColumnWidth + volumeColumnWidth + 1 - 21) + "│\n"
+                }
+
+                outMessage +=
+                    "└" + "─".repeat(priceColumnWidth) + "┴" + "─".repeat(volumeColumnWidth) + "┘"
+
+                print(outMessage)
+
+                delay(refreshInterval * 1000)
+            }
+        }
+    }
+
     override val coroutineContext: CoroutineContext
         get() = TODO("Not yet implemented")
 
@@ -123,4 +256,6 @@ object OrdersQueue: OrdersQueue {
             else -> this.green()
         }
     }
+
+
 }

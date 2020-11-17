@@ -3,10 +3,9 @@ package com.broxus.huckster.prices.adapters
 import com.broxus.huckster.interfaces.PriceFeed
 import com.broxus.huckster.prices.models.FixedRateInput
 import com.broxus.huckster.prices.models.Rate
-import com.broxus.logger2
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.importre.crayon.red
+import com.broxus.utils.red
 import java.io.IOException
 
 /**

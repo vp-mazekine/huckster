@@ -3,8 +3,7 @@ package com.broxus.huckster.interfaces
 import com.broxus.huckster.models.PlaceOrderEvent
 import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.types.AddressType
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.CoroutineScope
 
 interface OrdersQueue: CoroutineScope {
     /**
@@ -36,4 +35,6 @@ interface OrdersQueue: CoroutineScope {
         workspaceId: String?,
         currency: String?
     ): Boolean
+
+    suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Long)
 }

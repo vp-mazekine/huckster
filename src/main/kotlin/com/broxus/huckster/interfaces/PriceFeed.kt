@@ -1,8 +1,5 @@
 package com.broxus.huckster.interfaces
 
-import com.broxus.huckster.prices.models.Rate
-import com.google.gson.JsonObject
-
 interface PriceFeed {
     /**
      * Get rate for a specified currency pair
