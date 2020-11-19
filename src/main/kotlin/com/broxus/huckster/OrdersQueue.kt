@@ -33,7 +33,8 @@ object OrdersQueue: OrdersQueue {
             event.fromCurrency,
             event.toCurrency,
             event.fromAmount,
-            event.toAmount
+            event.toAmount,
+            "Huckster MM"
         )?.let {
 
             logger2(
@@ -92,7 +93,7 @@ object OrdersQueue: OrdersQueue {
      */
     override fun flush(
         userAddress: String,
-        addressType: AddressType,
+        addressType: String,
         workspaceId: String?,
         currency: String?
     ): Boolean {
@@ -116,9 +117,9 @@ object OrdersQueue: OrdersQueue {
         return true
     }
 
-    override suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Long) {
+    override suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Int) {
         var orderBook: ExchangeOrderBook?
-        var averagePrice: Float = 0.0F
+        var averagePrice: Float
         var priceMaxLength: Int = 0
         var volumeMaxLength: Int = 0
         var minAskPrice: Float
@@ -136,12 +137,12 @@ object OrdersQueue: OrdersQueue {
         ).apply {
             roundingMode = RoundingMode.HALF_UP
         }
-        var outMessage: String = ""
+        var outMessage: String
         val minScale = 1.0F
         val maxScale = 11.0F
         var interval: Float
         var bars: Int
-        var t: String = ""
+        var t: String
 
         while(true) {
             orderBook = api!!.getOrderBook(base, counter)
@@ -190,7 +191,7 @@ object OrdersQueue: OrdersQueue {
                 //println("\u001Bc")
 
                 priceColumnWidth = max(priceMaxLength, 5) + 2
-                volumeColumnWidth = 11 + volumeMaxLength + 3
+                volumeColumnWidth = 11 + volumeMaxLength + 4
 
                 interval = (maxVolume - minVolume) / (maxScale - minScale)
 
@@ -205,7 +206,8 @@ object OrdersQueue: OrdersQueue {
                     bars = ((ask.volume.toFloat() - minVolume) / interval).toInt() + 1
                     outMessage +=
                         "│ " + ask.rate + " ".repeat(priceColumnWidth - ask.rate.length - 1) + "│ " +
-                        "█".repeat(bars).red() + " " + ask.volume.red() + " ".repeat(volumeColumnWidth - bars - ask.volume.length - 2) + "│\n"
+                        " ".repeat(volumeMaxLength - ask.volume.length) + ask.volume.red() +
+                        " ".repeat(volumeColumnWidth - bars - volumeMaxLength - 2) + "█".repeat(bars).red() + " " + "│\n"
                 }
 
                 if(it.asks.count() == 0) {
@@ -225,7 +227,8 @@ object OrdersQueue: OrdersQueue {
                     bars = ((bid.volume.toFloat() - minVolume) / interval).toInt() + 1
                     outMessage +=
                         "│ " + bid.rate + " ".repeat(priceColumnWidth - bid.rate.length - 1) + "│ " +
-                        "█".repeat(bars).green() + " " + bid.volume.green() + " ".repeat(volumeColumnWidth - bars - bid.volume.length - 2) + "│\n"
+                        " ".repeat(volumeMaxLength - bid.volume.length) + bid.volume.red() +
+                        " ".repeat(volumeColumnWidth - bars - volumeMaxLength - 2) + "█".repeat(bars).red() + " " + "│\n"
                 }
 
                 if(it.bids.count() == 0) {
@@ -238,7 +241,7 @@ object OrdersQueue: OrdersQueue {
 
                 print(outMessage)
 
-                delay(refreshInterval * 1000)
+                delay(refreshInterval * 1000L)
             }
         }
     }

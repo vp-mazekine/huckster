@@ -5,7 +5,7 @@ import com.broxus.nova.types.AddressType
 
 data class PlaceOrderEvent(
     val userAddress: String,
-    val addressType: AddressType,
+    val addressType: String,
     val workspaceId: String?,
     var fromAmount: String,
     var toAmount: String,

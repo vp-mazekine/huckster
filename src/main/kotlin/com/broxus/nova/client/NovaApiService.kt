@@ -277,7 +277,7 @@ object NovaApiService {
     @Suppress("UNCHECKED_CAST")
     fun getSpecificUserBalance(
         userAddress: String,
-        addressType: AddressType,
+        addressType: String,
         workspaceId: String? = null
     ): List<AccountBalance>? {
 
@@ -336,7 +336,7 @@ object NovaApiService {
     fun getSpecificUserOrders(
         id: String? = null,
         userAddress: String,
-        addressType: AddressType,
+        addressType: String,
         workspaceId: String? = null,
         base: String? = null,
         counter: String? = null,
@@ -398,7 +398,7 @@ object NovaApiService {
     fun createLimitOrder(
         id: String,
         userAddress: String,
-        addressType: AddressType,
+        addressType: String,
         workspaceId: String? = null,
         from: String,
         to: String,

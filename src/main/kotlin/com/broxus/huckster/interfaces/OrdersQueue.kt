@@ -31,10 +31,10 @@ interface OrdersQueue: CoroutineScope {
      */
     fun flush(
         userAddress: String,
-        addressType: AddressType,
+        addressType: String,
         workspaceId: String?,
         currency: String?
     ): Boolean
 
-    suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Long)
+    suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Int)
 }

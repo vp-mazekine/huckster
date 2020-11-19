@@ -19,7 +19,7 @@ import com.google.gson.annotations.Expose
 data class ExchangeLimitInput (
     @Expose val id: String,
     @Expose val userAddress: String,
-    @Expose val addressType: AddressType,
+    @Expose val addressType: String,
     @Expose val workspaceId: String?,
     @Expose val from: String,
     @Expose val to: String,

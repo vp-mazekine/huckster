@@ -12,6 +12,6 @@ import com.google.gson.annotations.Expose
  */
 data class Account(
     @Expose val userAddress: String,
-    @Expose val addressType: AddressType,
+    @Expose val addressType: String,
     @Expose val workspaceId: String
 )

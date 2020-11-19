@@ -28,6 +28,8 @@ fun main(args: Array<String>) {
     var priceAuthPath = ""
     var base = ""
     var counter = ""
+    var refreshInterval = 30
+    val version = "0.3 rev.1"
 
     val greeting =
         "                                                                  \n" +
@@ -40,6 +42,7 @@ fun main(args: Array<String>) {
         "                                                                  ".yellow()
 
     val usage =
+        "huckster v.$version\n\n".bold() +
         "USAGE:\n".brightGreen() +
         "\thuckster " + "<JOB> ".green() + "[PARAMS]\n".yellow() +
         "\t\n" +
@@ -56,12 +59,16 @@ fun main(args: Array<String>) {
                 "\t\tStrategy configuration\n" +
         "\t\t-pad, --priceAdapter <FILE>".italic() +
                 "\tPrice adapter configuration\n" +
-        "\t\t-pau, --priceAuth <FILE>".italic() +
-                "\tPrice adapter authentication file [optional]\n\n" +
+        "\t\t[-pau, --priceAuth <FILE>]".italic() +
+                "\tPrice adapter authentication file [adapter-dependent]\n\n" +
         "\tOrderbook:\n".underline() +
         "\t\t-p, --pair <PAIR>".italic() +
                 "\t\t\tBase and counter currency tickers separated by a delimiter.\n" +
-                "\t\t\t\t\t\t\t\t\tSupported delimiters: underscore(_), dash(-) and slash (/)"
+                "\t\t\t\t\t\t\t\t\tSupported delimiters: underscore(_), dash(-) and slash (/)\n" +
+        "\t\t-k, --keys <FILE>".italic() +
+                "\t\t\tKeys to access Broxus Nova platform\n" +
+        "\t\t[-r, --refresh <SECONDS>]".italic() +
+                "\tOrderbook refresh rate in seconds. Default: 10"
 
     val errors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
@@ -144,6 +151,23 @@ fun main(args: Array<String>) {
                             if(!errors.containsKey("wrong_orderbook")) errors["wrong_orderbook"] = mutableListOf()
 
                             errors["wrong_orderbook"]?.add("Wrong number of arguments to display orderbook")
+                        }
+                    }
+
+                    i++
+                }
+            }
+
+            "--refresh", "-r" -> {
+                if(i < args.lastIndex) {
+                    args[i + 1].toIntOrNull().let {
+                        when(it) {
+                            null -> {
+                                if(!errors.containsKey("wrong_orderbook")) errors["wrong_orderbook"] = mutableListOf()
+
+                                errors["wrong_orderbook"]?.add("Refresh rate is not an integer number")
+                            }
+                            else -> refreshInterval = it
                         }
                     }
 
@@ -250,7 +274,7 @@ fun main(args: Array<String>) {
     when(command) {
         "orderbook" -> {
             try {
-                runBlocking { OrdersQueue.drawOrderBook(base, counter, 10) }
+                runBlocking { OrdersQueue.drawOrderBook(base, counter, refreshInterval) }
             } catch(e: Exception) {
                 logger2(e.message + "\n" +
                     e.stackTrace.joinToString("\n").red())
@@ -301,9 +325,9 @@ fun main(args: Array<String>) {
 
             val launchTime = Date(System.currentTimeMillis() - startTime)
             println("huckster".italic() + " launched in " +
-                    SimpleDateFormat("HH:mm:ss.SSS").apply{
+                    SimpleDateFormat("HH:mm:ss").apply{
                         timeZone = TimeZone.getTimeZone("UTC")
-                    }.format(launchTime)
+                    }.format(launchTime) + "\n"
             )
 
             runBlocking { strategyAdapter.run() }

@@ -25,7 +25,7 @@ import com.google.gson.annotations.Expose
 data class ExchangeSearchInput (
     @Expose val id: String?,
     @Expose val userAddress: String,
-    @Expose val addressType: AddressType,
+    @Expose val addressType: String,
     @Expose val workspaceId: String?,
     @Expose val base: String?,
     @Expose val counter: String?,
