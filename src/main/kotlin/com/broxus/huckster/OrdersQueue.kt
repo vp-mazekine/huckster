@@ -227,8 +227,8 @@ object OrdersQueue: OrdersQueue {
                     bars = ((bid.volume.toFloat() - minVolume) / interval).toInt() + 1
                     outMessage +=
                         "│ " + bid.rate + " ".repeat(priceColumnWidth - bid.rate.length - 1) + "│ " +
-                        " ".repeat(volumeMaxLength - bid.volume.length) + bid.volume.red() +
-                        " ".repeat(volumeColumnWidth - bars - volumeMaxLength - 2) + "█".repeat(bars).red() + " " + "│\n"
+                        " ".repeat(volumeMaxLength - bid.volume.length) + bid.volume.green() +
+                        " ".repeat(volumeColumnWidth - bars - volumeMaxLength - 2) + "█".repeat(bars).green() + " " + "│\n"
                 }
 
                 if(it.bids.count() == 0) {
