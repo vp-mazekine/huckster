@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     var base = ""
     var counter = ""
     var refreshInterval = 30
-    val version = "0.3 rev.1"
+    val version = "0.3 rev.2"
 
     val greeting =
         "                                                                  \n" +
@@ -252,7 +252,7 @@ fun main(args: Array<String>) {
     }
 
     println(greeting)
-    println("\nWelcome to Huckster!\nInitiating...")
+    print("\nWelcome to Huckster!\nInitiating... ")
 
     val startTime = System.currentTimeMillis()
 
@@ -324,7 +324,7 @@ fun main(args: Array<String>) {
             }
 
             val launchTime = Date(System.currentTimeMillis() - startTime)
-            println("huckster".italic() + " launched in " +
+            println(" launched in " +
                     SimpleDateFormat("HH:mm:ss").apply{
                         timeZone = TimeZone.getTimeZone("UTC")
                     }.format(launchTime) + "\n"

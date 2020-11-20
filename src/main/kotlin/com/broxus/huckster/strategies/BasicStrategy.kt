@@ -36,6 +36,7 @@ class BasicStrategy(
 
                 //  Get balance for specific currency from the list of all available ones
                 var availableBalance: Float? = null
+
                 NovaApiService.getSpecificUserBalance(
                     strategy.account.userAddress,
                     strategy.account.addressType,
@@ -60,9 +61,9 @@ class BasicStrategy(
                     exitProcess(-1)
                 }
 
-                logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
+                availableBalance = availableBalance?.times(strategy.configuration.volumeLimit.toFloat())
 
-                var remainingBalance = availableBalance
+                logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
 
                 //  TODO: Perform checks on strategy data validity
 
@@ -77,7 +78,7 @@ class BasicStrategy(
                             structuralPart = size.toFloat()
 
                             val fromAmount =
-                                (remainingBalance ?: 0.0F) *
+                                (availableBalance ?: 0.0F) *
                                         (offsetPart ?: 1.0F) *
                                         (currencyPart ?: 1.0F) *
                                         (structuralPart ?: 1.0F)
@@ -90,21 +91,17 @@ class BasicStrategy(
 
                             if (basePrice == null) return@size
 
-                            //logger2("Basic exchange price: 1 ${strategy.configuration.sourceCurrency} = $basePrice ${s.targetCurrency}")
-
                             val toAmount = fromAmount * basePrice!! *
                                     (1.0F + s.spreadStructure[index].toFloat()) //  TODO: Add a check if spread and size structure are of a different length
 
                             //  In case the order in structure is less then it is allowed by the strategy, it is skipped
                             if (fromAmount < strategy.configuration.minOrderSize.toFloat()) {
                                 logger2(
-                                    "Order too small to place: ".yellow() +
+                                    "[$offsetIndex] Order is too small to place: ".yellow() +
                                             "$fromAmount ${strategy.configuration.sourceCurrency} --> $toAmount ${s.targetCurrency}"
                                 )
                                 return@size
                             }
-
-                            remainingBalance = remainingBalance?.minus(fromAmount)
 
                             launch {
                                 OrdersQueue.enqueue(

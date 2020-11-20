@@ -4,7 +4,6 @@ import com.broxus.huckster.interfaces.OrdersQueue
 import com.broxus.huckster.models.PlaceOrderEvent
 import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.models.ExchangeOrderBook
-import com.broxus.nova.types.AddressType
 import com.broxus.nova.types.OrderSideType
 import com.broxus.utils.*
 import kotlinx.coroutines.delay
@@ -34,7 +33,7 @@ object OrdersQueue: OrdersQueue {
             event.toCurrency,
             event.fromAmount,
             event.toAmount,
-            "Huckster MM"
+            event.applicationId
         )?.let {
 
             logger2(
@@ -68,14 +67,24 @@ object OrdersQueue: OrdersQueue {
                             (orders[0].toValue.toFloat() - orders[0].toExchangedValue.toFloat()).toString()
                     }
                 } catch (e: Exception) {
-                    logger2(e.localizedMessage)
+                    logger2(e.message + "\n" +
+                            e.stackTrace.joinToString("\n").red())
                 }
             }
 
             //  Cancel current order
-            api!!.cancelOrder(it.transactionId)
+            if(api!!.cancelOrder(it.transactionId)) {
+                logger2(
+                    "[$threadId] Order ${it.transactionId} cancelled".recolorByThread(threadId)
+                )
 
-            enqueue(sequentialOrder, threadId)
+                //  Launch the order for the remainder of the balance
+                enqueue(sequentialOrder, threadId)
+            } else {
+                logger2(
+                    "[$threadId] Order ${it.transactionId} was not cancelled for some reason".recolorByThread(threadId)
+                )
+            }
         }
     }
 
@@ -111,7 +120,15 @@ object OrdersQueue: OrdersQueue {
             isAlive = true,
             base = currency
         )?.forEach {
-            api!!.cancelOrder(it.transactionId)
+            if(api!!.cancelOrder(it.transactionId)){
+                logger2(
+                    "Order ${it.transactionId} cancelled".green()
+                )
+            } else {
+                logger2(
+                    "Order ${it.transactionId} was not cancelled for some reason".green()
+                )
+            }
         }
 
         return true

@@ -457,12 +457,6 @@ object NovaApiService {
             return false
         }
 
-        if(result.isSuccessful){
-            logger2("Cancelled order $transactionId".green())
-        }else{
-            logger.error(ErrorDescription(result.message(), result.code().toString()).toString().red())
-        }
-
         return result.isSuccessful
     }
 
