@@ -319,7 +319,7 @@ fun main(args: Array<String>) {
                     }
                 }
             } catch(e: Exception) {
-                logger2(e.stackTrace.joinToString("\n").red())
+                logger2(e.message + "\n" + e.stackTrace.joinToString("\n").red())
                 exitProcess(-1)
             }
 

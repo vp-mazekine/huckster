@@ -409,10 +409,10 @@ object NovaApiService {
 
         val result: Response<JsonObject>
 
-        try {
-            //  Input model for the REST call
-            val input = ExchangeLimitInput(id, userAddress, addressType, workspaceId, from, to, fromValue, toValue, applicationId)
+        //  Input model for the REST call
+        val input = ExchangeLimitInput(id, userAddress, addressType, workspaceId, from, to, fromValue, toValue, applicationId)
 
+        try {
             //  Prepare the request signature
             val (nonce, signature) = sign(
                 "/v1/exchange/limit",
@@ -431,7 +431,9 @@ object NovaApiService {
             return when(this) {
                 is Either.Right -> this.b
                 is Either.Left -> {
-                    logger.error(this.a.toString())
+                    logger.error(
+                        this.a.toString() + "\nSource request data:\n$input"
+                    )
                     null
                 }
                 else -> null

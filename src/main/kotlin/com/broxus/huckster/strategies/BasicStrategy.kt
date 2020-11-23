@@ -103,21 +103,30 @@ class BasicStrategy(
                                 return@size
                             }
 
-                            launch {
-                                OrdersQueue.enqueue(
-                                    PlaceOrderEvent(
-                                        strategy.account.userAddress,
-                                        strategy.account.addressType,
-                                        strategy.account.workspaceId,
-                                        fromAmount.toString(),
-                                        toAmount.toString(),
-                                        strategy.configuration.sourceCurrency,
-                                        s.targetCurrency,
-                                        "Huckster MarketMaker",
-                                        (offset.offset.toFloat() * 1000).toLong(),
-                                        (strategy.configuration.refreshInterval.soft.toFloat() * 1000).toLong()
-                                    ),
-                                    offsetIndex
+                            val event = PlaceOrderEvent(
+                                strategy.account.userAddress,
+                                strategy.account.addressType,
+                                strategy.account.workspaceId,
+                                fromAmount.toString(),
+                                toAmount.toString(),
+                                strategy.configuration.sourceCurrency,
+                                s.targetCurrency,
+                                "Huckster MarketMaker",
+                                (offset.offset.toFloat() * 1000).toLong(),
+                                (strategy.configuration.refreshInterval.soft.toFloat() * 1000).toLong()
+                            )
+
+                            try {
+                                launch {
+                                    OrdersQueue.enqueue(
+                                        event,
+                                        offsetIndex
+                                    )
+                                }
+                            } catch(e: Exception) {
+                                logger2(
+                                    "[$offsetIndex] Coroutine failed to launch at this event:\n$event\n".red() +
+                                            "Details:" + e.message + "\n" + e.stackTrace.joinToString("\n").red()
                                 )
                             }
                         }

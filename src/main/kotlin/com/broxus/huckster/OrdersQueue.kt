@@ -65,6 +65,12 @@ object OrdersQueue: OrdersQueue {
                             (orders[0].fromValue.toFloat() - orders[0].fromExchangedValue.toFloat()).toString()
                         sequentialOrder.toAmount =
                             (orders[0].toValue.toFloat() - orders[0].toExchangedValue.toFloat()).toString()
+
+                        if(orders[0].fromExchangedValue.toFloat() < event.fromAmount.toFloat()) {
+                            logger2(
+                                "[$threadId] Order ${it.transactionId} filled for ${orders[0].fromExchangedValue} ${event.fromCurrency}".recolorByThread(threadId)
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     logger2(e.message + "\n" +
@@ -73,7 +79,31 @@ object OrdersQueue: OrdersQueue {
             }
 
             //  Cancel current order
-            if(api!!.cancelOrder(it.transactionId)) {
+            //  Try several times and only after that throw the error
+            var orderCancelled: Boolean = false
+
+            for(i in 1..4) {
+                if(api!!.cancelOrder(it.transactionId)) {
+                    orderCancelled = true
+                    break
+                } else {
+                    logger2(
+                        "[$threadId] Order ${it.transactionId} cancellation delayed. Attempt #$i..."
+                    )
+
+                    //  Delay the execution by the increasing number of millis to let API restart
+                    delay(
+                        when (i) {
+                            1 ->     1_000
+                            2 ->    10_000
+                            3 ->    30_000
+                            else -> break
+                        }
+                    )
+                }
+            }
+
+            if(orderCancelled) {
                 logger2(
                     "[$threadId] Order ${it.transactionId} cancelled".recolorByThread(threadId)
                 )

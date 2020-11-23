@@ -23,6 +23,7 @@ val arrowVersion = "0.11.0"
 dependencies {
     testImplementation(kotlin("test-junit"))
     implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.0")
 
     //  Retrofit dependencies
     implementation("com.squareup.retrofit2:retrofit:2.3.0")
@@ -40,9 +41,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("ch.qos.logback:logback-core:1.2.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.51")
-
-    //  Console utils
-    //implementation("com.importre:crayon:0.1.0")
 
     //  Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1")
