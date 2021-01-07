@@ -1,6 +1,7 @@
 package com.broxus.huckster
 
 import com.broxus.huckster.models.StrategyInput
+import com.broxus.huckster.prices.adapters.BitcoinComRates
 import com.broxus.huckster.prices.adapters.FixedRate
 import com.broxus.huckster.prices.adapters.GoogleSheetRates
 import com.broxus.huckster.strategies.BasicStrategy
@@ -292,11 +293,17 @@ fun main(args: Array<String>) {
             val priceAdapter = try {
                 when(priceFeedConfiguration["adapter"].asString) {
                     "fixed"         -> FixedRate(priceFeedConfiguration)
-                    "googleSheet" -> {
+                    "googleSheet"   ->
+                    {
                         if(!File(priceAuthPath).exists()) throw(Exception("Authentication file for Google Sheet price adapter doesn't exist. Terminating now..."))
                         GoogleSheetRates(priceFeedConfiguration, priceAuthPath)
                     }
-                    else            -> {
+                    "bitcoin.com"   ->
+                    {
+                        BitcoinComRates(priceFeedConfiguration)
+                    }
+                    else            ->
+                    {
                         throw(Exception("Unknown price adapter (${priceFeedConfiguration["adapter"]}). Terminating now..."))
                     }
                 }

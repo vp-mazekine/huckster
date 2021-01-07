@@ -1,5 +1,7 @@
 package com.broxus.huckster.interfaces
 
+import com.broxus.huckster.prices.models.Rate
+
 interface PriceFeed {
     /**
      * Get rate for a specified currency pair

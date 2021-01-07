@@ -1,9 +1,10 @@
 package com.broxus.huckster.prices.adapters
 
 import com.broxus.huckster.interfaces.PriceFeed
+import com.broxus.huckster.logger2
 import com.broxus.huckster.prices.models.GoogleSheetInput
 import com.broxus.huckster.prices.models.Rate
-import com.broxus.huckster.logger2
+import com.broxus.utils.red
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
@@ -16,11 +17,9 @@ import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.broxus.utils.red
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
-import kotlin.jvm.Throws
 
 class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): PriceFeed {
     private val HTTP_TRANSPORT by lazy { GoogleNetHttpTransport.newTrustedTransport() }
@@ -60,7 +59,11 @@ class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): Pri
         }
 
         rates.forEach {
-            if(it.fromCurrency == fromCurrency && it.toCurrency == toCurrency) return it.rate
+            when {
+                (it.fromCurrency == fromCurrency && it.toCurrency == toCurrency) -> return it.rate
+                (it.toCurrency == fromCurrency && it.fromCurrency == toCurrency) -> return 1 / it.rate
+                else -> {/* no-op */}
+            }
         }
 
         return null

@@ -1,4 +1,4 @@
-package com.broxus.nova.models
+package com.broxus.utils
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName

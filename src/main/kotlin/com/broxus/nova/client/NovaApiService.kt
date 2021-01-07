@@ -9,6 +9,7 @@ import com.broxus.nova.models.*
 import com.broxus.nova.types.AddressType
 import com.broxus.nova.types.ExchangeOrderStateType
 import com.broxus.nova.types.OrderSideType
+import com.broxus.utils.ErrorDescription
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
