@@ -6,6 +6,7 @@ import com.broxus.huckster.interfaces.Strategy
 import com.broxus.huckster.models.PlaceOrderEvent
 import com.broxus.huckster.models.StrategyInput
 import com.broxus.huckster.logger2
+import com.broxus.huckster.notifiers.Notifier
 import com.broxus.nova.client.NovaApiService
 import com.broxus.utils.green
 import com.broxus.utils.red
@@ -60,8 +61,11 @@ class BasicStrategy(
                     || (availableBalance!! * strategy.configuration.volumeLimit.toFloat()
                             < strategy.configuration.minOrderSize.toFloat())
                 ) {
-                    logger2("Source balance in ${strategy.configuration.sourceCurrency} is insufficient to place orders.\nTerminating now...".red())
-                    exitProcess(-1)
+                    val errorMessage = "Source balance in ${strategy.configuration.sourceCurrency} is insufficient to place orders.\n\n" +
+                            "Current balance: $availableBalance ${strategy.configuration.sourceCurrency}"
+                    logger2(errorMessage.red())
+                    Notifier()?.warning(errorMessage, "Huckster")
+                    return@launch
                 }
 
                 availableBalance = availableBalance?.times(strategy.configuration.volumeLimit.toFloat())

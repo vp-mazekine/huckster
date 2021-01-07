@@ -1,17 +1,23 @@
 package com.broxus.huckster
 
 import com.broxus.huckster.models.StrategyInput
+import com.broxus.huckster.notifiers.Notifier
+import com.broxus.huckster.notifiers.adapters.TelegramBotAdapter
+import com.broxus.huckster.notifiers.models.TelegramBotConfig
 import com.broxus.huckster.prices.adapters.BitcoinComRates
 import com.broxus.huckster.prices.adapters.FixedRate
 import com.broxus.huckster.prices.adapters.GoogleSheetRates
+import com.broxus.huckster.prices.models.FixedRateInput
 import com.broxus.huckster.strategies.BasicStrategy
 import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.models.ApiConfig
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.broxus.utils.*
+import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
@@ -27,6 +33,7 @@ fun main(args: Array<String>) {
     var strategyPath = ""
     var priceAdapterPath = ""
     var priceAuthPath = ""
+    var notifierPath = ""
     var base = ""
     var counter = ""
     var refreshInterval = 30
@@ -62,6 +69,8 @@ fun main(args: Array<String>) {
                 "\tPrice adapter configuration\n" +
         "\t\t[-pau, --priceAuth <FILE>]".italic() +
                 "\tPrice adapter authentication file [adapter-dependent]\n\n" +
+        "\t\t[-n, --notify <FILE>]".italic() +
+                "\tNotifier configuration file [optional]\n\n" +
         "\tOrderbook:\n".underline() +
         "\t\t-p, --pair <PAIR>".italic() +
                 "\t\t\tBase and counter currency tickers separated by a delimiter.\n" +
@@ -176,6 +185,20 @@ fun main(args: Array<String>) {
                 }
             }
 
+            "--notify", "-n" -> {
+                if(i < args.lastIndex) {
+                    if(File(args[i + 1]).exists()){
+                        notifierPath = args[i + 1]
+                    } else {
+                        if(!errors.containsKey("wrong_file")) errors["wrong_file"] = mutableListOf()
+
+                        errors["wrong_file"]?.add(args[i+1].red())
+                    }
+
+                    i++
+                }
+            }
+
             "--help", "-h" -> {
                 println(usage)
                 exitProcess(-1)
@@ -215,7 +238,7 @@ fun main(args: Array<String>) {
 
             if(priceAdapterPath == "") {
                 if(!errors.containsKey("parameter")) errors["parameter"] = mutableListOf()
-                errors["parameter"]?.add("-p, --priceAdapter <FILE>")
+                errors["parameter"]?.add("-pad, --priceAdapter <FILE>")
             }
         }
     }
@@ -272,6 +295,31 @@ fun main(args: Array<String>) {
     //  Initialize orders queue
     OrdersQueue.init(NovaApiService)
 
+    //  Initialize notifier
+    val notifierConfig = gson.fromJson(
+        File(notifierPath).bufferedReader(),
+        JsonObject::class.java
+    )
+
+    try {
+        val notifierAdapter = when(notifierConfig["adapter"].asString) {
+            "telegram" -> {
+                try {
+                    TelegramBotAdapter(
+                        Gson().fromJson(notifierConfig, TelegramBotConfig::class.java)
+                    )
+                } catch(e: IOException) {
+                    throw(IOException("Incorrect Telegram bot configuration!\n${e.message}".red(), e))
+                }
+            }
+            else -> throw(Exception("Unknown notifier adapter (${notifierConfig["adapter"]})..."))
+        }
+
+        Notifier.init(notifierAdapter)
+    } catch (e: Exception) {
+        logger2(e.message?.red() + "\n" + e.stackTrace.joinToString("\n").red())
+    }
+
     when(command) {
         "orderbook" -> {
             try {
@@ -308,7 +356,7 @@ fun main(args: Array<String>) {
                     }
                 }
             } catch(e: Exception) {
-                logger2(e.stackTrace.joinToString("\n").red())
+                logger2(e.message?.red() + "\n" + e.stackTrace.joinToString("\n").red())
                 exitProcess(-1)
             }
 

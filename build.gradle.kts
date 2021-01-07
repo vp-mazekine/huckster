@@ -16,10 +16,12 @@ repositories {
     jcenter()
     maven { url = uri("https://dl.bintray.com/arrow-kt/arrow-kt/") }
     maven { url = uri("https://oss.jfrog.org/artifactory/oss-snapshot-local/") } // for SNAPSHOT builds
+    maven { url = uri("https://jitpack.io") }
 }
 
 val novaLibVersion = "0.0.5-alpha"
 val arrowVersion = "0.11.0"
+val telegramBotVersion = "6.0.1"
 
 dependencies {
     testImplementation(kotlin("test-junit"))
@@ -56,6 +58,9 @@ dependencies {
 
     //  Broxus
     implementation("com.broxus:nova-lib:$novaLibVersion")
+
+    //  Kotlin Telegram Bot
+    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:$telegramBotVersion")
 }
 
 tasks.withType<KotlinCompile>() {
