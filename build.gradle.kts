@@ -18,6 +18,7 @@ repositories {
     maven { url = uri("https://oss.jfrog.org/artifactory/oss-snapshot-local/") } // for SNAPSHOT builds
 }
 
+val novaLibVersion = "0.0.5-alpha"
 val arrowVersion = "0.11.0"
 
 dependencies {
@@ -52,6 +53,9 @@ dependencies {
 
     //  System utils
     implementation("org.apache.commons:commons-lang3:3.11")
+
+    //  Broxus
+    implementation("com.broxus:nova-lib:$novaLibVersion")
 }
 
 tasks.withType<KotlinCompile>() {

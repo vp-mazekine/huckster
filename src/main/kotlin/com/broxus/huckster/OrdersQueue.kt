@@ -134,21 +134,32 @@ object OrdersQueue: OrdersQueue {
         userAddress: String,
         addressType: String,
         workspaceId: String?,
-        currency: String?
+        from: String,
+        to: String
     ): Boolean {
         if(api == null) {
             logger.error("Nova API interface has not been initialized!")
             return false
         }
 
-        logger2("Flushing all active ${currency ?: ""} orders...")
+        val orderSide = orderSide(from, to)
+        var base: String = from
+        var counter: String = to
+        if(orderSide == OrderSideType.buy) {
+            base = to
+            counter = from
+        }
+
+        logger2("Flushing all active orders $from-->$to...")
 
         api!!.getSpecificUserOrders(
             userAddress = userAddress,
             addressType = addressType,
             workspaceId = workspaceId,
             isAlive = true,
-            base = currency
+            base = base,
+            counter = counter,
+            orderSide = orderSide
         )?.forEach {
             if(api!!.cancelOrder(it.transactionId)){
                 logger2(
@@ -307,5 +318,22 @@ object OrdersQueue: OrdersQueue {
         }
     }
 
+    /**
+     * Get order side for the specified exchange direction
+     *
+     * @param from Currency ticker
+     * @param to Currency ticker
+     * @return OrderSideType or null in case of error
+     */
+    fun orderSide(from: String, to: String): OrderSideType? {
+        NovaApiService.getCurrenciesPairs()?.forEach {pair ->
+            when {
+                (pair.base == from && pair.counter == to) -> return OrderSideType.sell
+                (pair.counter == from && pair.base == to) -> return OrderSideType.buy
+                else -> {/* no-op */}
+            }
+        }
 
+        return null
+    }
 }

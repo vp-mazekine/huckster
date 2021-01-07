@@ -27,12 +27,15 @@ class BasicStrategy(
         while(true) {
             val thread = GlobalScope.launch {
                 //  Flush all current orders
-                OrdersQueue.flush(
-                    strategy.account.userAddress,
-                    strategy.account.addressType,
-                    strategy.account.workspaceId,
-                    currency = strategy.configuration.sourceCurrency
-                )
+                strategy.strategies.forEach {
+                    OrdersQueue.flush(
+                        strategy.account.userAddress,
+                        strategy.account.addressType,
+                        strategy.account.workspaceId,
+                        strategy.configuration.sourceCurrency,
+                        it.targetCurrency
+                    )
+                }
 
                 //  Get balance for specific currency from the list of all available ones
                 var availableBalance: Float? = null

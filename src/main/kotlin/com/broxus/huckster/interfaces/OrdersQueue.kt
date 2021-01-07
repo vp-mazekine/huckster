@@ -33,7 +33,8 @@ interface OrdersQueue: CoroutineScope {
         userAddress: String,
         addressType: String,
         workspaceId: String?,
-        currency: String?
+        from: String,
+        to: String
     ): Boolean
 
     suspend fun drawOrderBook(base: String, counter: String, refreshInterval: Int)
