@@ -71,6 +71,9 @@ class BasicStrategy(
                 availableBalance = availableBalance?.times(strategy.configuration.volumeLimit.toFloat())
 
                 logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
+                Notifier()?.info("Marketmaker restarted." +
+                        "Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}",
+                "Huckster")
 
                 //  TODO: Perform checks on strategy data validity
 
