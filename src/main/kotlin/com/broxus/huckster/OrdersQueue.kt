@@ -60,16 +60,20 @@ object OrdersQueue: OrdersQueue {
                 order.transactionId == it.transactionId
             }?.let {orders ->
                 try {   //  TODO: Add check for data validity
-                    if (orders.first().fromExchangedValue.toFloat() != 0.0F) {
-                        sequentialOrder.fromAmount =
-                            (orders.first().fromValue.toFloat() - orders.first().fromExchangedValue.toFloat()).toString()
-                        sequentialOrder.toAmount =
-                            (orders.first().toValue.toFloat() - orders.first().toExchangedValue.toFloat()).toString()
+                    if(orders.count() > 0) {
+                        if (orders.first().fromExchangedValue.toFloat() != 0.0F) {
+                            sequentialOrder.fromAmount =
+                                (orders.first().fromValue.toFloat() - orders.first().fromExchangedValue.toFloat()).toString()
+                            sequentialOrder.toAmount =
+                                (orders.first().toValue.toFloat() - orders.first().toExchangedValue.toFloat()).toString()
 
-                        if(orders.first().fromExchangedValue.toFloat() < event.fromAmount.toFloat()) {
-                            logger2(
-                                "[$threadId] Order ${it.transactionId} filled for ${orders.first().fromExchangedValue} ${event.fromCurrency}".recolorByThread(threadId)
-                            )
+                            if (orders.first().fromExchangedValue.toFloat() < event.fromAmount.toFloat()) {
+                                logger2(
+                                    "[$threadId] Order ${it.transactionId} filled for ${orders.first().fromExchangedValue} ${event.fromCurrency}".recolorByThread(
+                                        threadId
+                                    )
+                                )
+                            }
                         }
                     }
                 } catch (e: Exception) {

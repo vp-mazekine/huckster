@@ -19,7 +19,7 @@ repositories {
     maven { url = uri("https://jitpack.io") }
 }
 
-val novaLibVersion = "0.0.5-alpha"
+val novaLibVersion = "0.0.6-alpha"
 val arrowVersion = "0.11.0"
 val telegramBotVersion = "6.0.1"
 

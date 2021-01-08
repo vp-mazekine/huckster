@@ -20,5 +20,6 @@ data class Configuration(
     @Expose val placementOffset: List<PlacementOffset>,
     @Expose val refreshInterval: RefreshInterval,
     @Expose val sourceCurrency: String,
-    @Expose val volumeLimit: String
+    @Expose val volumeLimit: String,
+    @Expose val notification: NotificationConfig?
 )

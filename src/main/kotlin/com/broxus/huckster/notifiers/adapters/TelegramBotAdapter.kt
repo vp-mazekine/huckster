@@ -8,6 +8,8 @@ import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.network.fold
 import org.slf4j.LoggerFactory
 import java.lang.Exception
+import java.text.MessageFormat
+import java.util.*
 
 class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     private var bot: Bot? = null
@@ -16,8 +18,17 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     override fun info(message: String, header: String?) {
         notify(message,
             when(header) {
-                null -> "ℹ️ Notification"
-                else -> "ℹ️ $header notification"
+                null ->
+                    ResourceBundle
+                        .getBundle("messages", Locale.ENGLISH)
+                        .getString("telegram.headers.info.default")
+                else ->
+                    MessageFormat(
+                        ResourceBundle
+                            .getBundle("messages", Locale.ENGLISH)
+                            .getString("telegram.headers.info.custom"),
+                        Locale.ENGLISH
+                    ).format(arrayOf(header))
             }
         )
     }
@@ -25,8 +36,17 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     override fun error(message: String, header: String?) {
         notify(message,
             when(header) {
-                null -> "\uD83D\uDCA2 Error"
-                else -> "\uD83D\uDCA2 $header error"
+                null ->
+                    ResourceBundle
+                        .getBundle("messages", Locale.ENGLISH)
+                        .getString("telegram.headers.error.default")
+                else ->
+                    MessageFormat(
+                        ResourceBundle
+                            .getBundle("messages", Locale.ENGLISH)
+                            .getString("telegram.headers.error.custom"),
+                        Locale.ENGLISH
+                    ).format(arrayOf(header))
             }
         )
     }
@@ -34,8 +54,17 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     override fun warning(message: String, header: String?) {
         notify(message,
             when(header) {
-                null -> "⚠️ Warning"
-                else -> "⚠️ $header warning"
+                null ->
+                    ResourceBundle
+                        .getBundle("messages", Locale.ENGLISH)
+                        .getString("telegram.headers.warning.default")
+                else ->
+                    MessageFormat(
+                        ResourceBundle
+                            .getBundle("messages", Locale.ENGLISH)
+                            .getString("telegram.headers.warning.custom"),
+                        Locale.ENGLISH
+                    ).format(arrayOf(header))
             }
         )
     }
@@ -64,7 +93,11 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
                             /* no-op */
                         },
                         {re ->
-                            this.logger.error("Error sending notification:\n${re.errorBody}", re.exception)
+                            this.logger.error("Error sending notification:\n\n" +
+                                    ("*$header*\n\n" +
+                                            message).escapeTelegramSpecialCharacters() + "\n\n" +
+                                    re.errorBody?.string(),
+                                re.exception)
                         }
                     )
                 }
@@ -77,5 +110,5 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     /**
      * Fixes Telegram issue with sending special characters
      */
-    fun String.escapeTelegramSpecialCharacters() = this.replace("[_\\-\\.]".toRegex()) {"\\${it.value}"}
+    private fun String.escapeTelegramSpecialCharacters() = this.replace("[_\\-\\.]".toRegex()) {"\\${it.value}"}
 }

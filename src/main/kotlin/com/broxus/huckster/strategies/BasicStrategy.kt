@@ -12,6 +12,8 @@ import com.broxus.utils.green
 import com.broxus.utils.red
 import com.broxus.utils.yellow
 import kotlinx.coroutines.*
+import java.text.MessageFormat
+import java.util.*
 import kotlin.system.exitProcess
 
 class BasicStrategy(
@@ -24,6 +26,9 @@ class BasicStrategy(
         var currencyPart: Float?
         var structuralPart: Float?
         var basePrice: Float?
+
+        var restartNotification = true
+        var initialBalance: Float? = null
 
         while(true) {
             val thread = GlobalScope.launch {
@@ -61,19 +66,114 @@ class BasicStrategy(
                     || (availableBalance!! * strategy.configuration.volumeLimit.toFloat()
                             < strategy.configuration.minOrderSize.toFloat())
                 ) {
-                    val errorMessage = "Source balance in ${strategy.configuration.sourceCurrency} is insufficient to place orders.\n\n" +
-                            "Current balance: $availableBalance ${strategy.configuration.sourceCurrency}"
+                    val errorMessage =
+                        MessageFormat(
+                            ResourceBundle.getBundle("messages", Locale.ENGLISH).getString("strategy.basic.insufficient_balance"),
+                            Locale.ENGLISH
+                        ).format(
+                            arrayOf(
+                                availableBalance ?: 0.0F,
+                                strategy.configuration.sourceCurrency,
+                                strategy.account.userAddress,
+                                strategy.account.addressType,
+                                strategy.account.workspaceId,
+                                NovaApiService.getStaticAddressByUser(
+                                    strategy.configuration.sourceCurrency,
+                                    strategy.account.userAddress,
+                                    strategy.account.addressType,
+                                    strategy.account.workspaceId
+                                )?.blockchainAddress
+                            )
+                        )
                     logger2(errorMessage.red())
-                    Notifier()?.warning(errorMessage, "Huckster")
+                    Notifier()?.error(errorMessage, "Huckster")
                     return@launch
                 }
 
-                availableBalance = availableBalance?.times(strategy.configuration.volumeLimit.toFloat())
+                availableBalance = availableBalance?.times(strategy.configuration.volumeLimit.toFloat()) ?: 0.0F
+
+                //  Check if available balance doesn't meet the warning threshold
+                if(initialBalance == null) initialBalance = availableBalance ?: 0.0F
+                try {
+                    when {
+                        initialBalance!! < availableBalance!! -> {
+                            //  In case the balance was refilled
+                            initialBalance = availableBalance
+
+                            val message = MessageFormat(
+                                ResourceBundle
+                                    .getBundle("messages", Locale.ENGLISH)
+                                    .getString("strategy.basic.balance_refilled"),
+                                Locale.ENGLISH
+                            ).format(
+                                arrayOf(
+                                    availableBalance,
+                                    strategy.configuration.sourceCurrency
+                                )
+                            )
+
+                            logger2(message.green())
+                            Notifier()?.info("message", "Huckster")
+                        }
+
+                        (!strategy.configuration.notification?.soft.isNullOrEmpty() &&
+                            availableBalance!! <= initialBalance!!
+                            * strategy.configuration.notification!!.soft!!.toFloat()) ||
+                        (!strategy.configuration.notification?.hard.isNullOrEmpty() &&
+                            availableBalance!! <= strategy.configuration.notification!!.hard!!.toFloat()) -> {
+
+                            //  In case available balance is lower than established threshold
+                            val message = MessageFormat(
+                                ResourceBundle
+                                    .getBundle("messages", Locale.ENGLISH)
+                                    .getString("strategy.basic.low_balance"),
+                                Locale.ENGLISH
+                            ).format(
+                                arrayOf(
+                                    availableBalance ?: 0.0F,
+                                    strategy.configuration.sourceCurrency,
+                                    strategy.account.userAddress,
+                                    strategy.account.addressType,
+                                    strategy.account.workspaceId,
+                                    NovaApiService.getStaticAddressByUser(
+                                        strategy.configuration.sourceCurrency,
+                                        strategy.account.userAddress,
+                                        strategy.account.addressType,
+                                        strategy.account.workspaceId
+                                    )?.blockchainAddress
+                                )
+                            )
+
+                            logger2(message.yellow())
+                            Notifier()?.warning(message, "Huckster")
+                        }
+                    }
+                } catch(e: Exception) {
+                    logger2(
+                        (
+                            "Unable to check warning limits\n" +
+                            e.message + "\n" +
+                            e.stackTrace.joinToString("\n")
+                        ).red()
+                    )
+                }
 
                 logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
-                Notifier()?.info("Marketmaker restarted." +
-                        "Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}",
-                "Huckster")
+                if(restartNotification) {
+                    Notifier()?.info(
+                        MessageFormat(
+                            ResourceBundle.getBundle("messages", Locale.ENGLISH).getString("strategy.basic.mm_restarted"),
+                            Locale.ENGLISH
+                        ).format(
+                            arrayOf(
+                                availableBalance ?: 0.0F,
+                                strategy.configuration.sourceCurrency
+                            )
+                        ),
+                        "Huckster"
+                    )
+                    restartNotification = false
+                }
 
                 //  TODO: Perform checks on strategy data validity
 
