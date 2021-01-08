@@ -140,7 +140,9 @@ class BasicStrategy(
                                         strategy.account.userAddress,
                                         strategy.account.addressType,
                                         strategy.account.workspaceId
-                                    )?.blockchainAddress
+                                    )?.blockchainAddress,
+                                    strategy.configuration.notification.soft?.toFloat() ?: 0.0F,
+                                    strategy.configuration.notification.hard?.toFloat() ?: 0.0F
                                 )
                             )
 
@@ -166,7 +168,7 @@ class BasicStrategy(
                             Locale.ENGLISH
                         ).format(
                             arrayOf(
-                                availableBalance ?: 0.0F,
+                                (availableBalance ?: 0.0F),
                                 strategy.configuration.sourceCurrency
                             )
                         ),
