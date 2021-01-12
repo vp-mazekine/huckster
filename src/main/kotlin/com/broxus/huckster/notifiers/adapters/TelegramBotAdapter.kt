@@ -110,5 +110,5 @@ class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     /**
      * Fixes Telegram issue with sending special characters
      */
-    private fun String.escapeTelegramSpecialCharacters() = this.replace("[_\\-\\.]".toRegex()) {"\\${it.value}"}
+    private fun String.escapeTelegramSpecialCharacters() = this.replace("[_\\-\\.\\)\\(]".toRegex()) {"\\${it.value}"}
 }

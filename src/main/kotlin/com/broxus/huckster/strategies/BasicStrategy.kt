@@ -8,10 +8,13 @@ import com.broxus.huckster.models.StrategyInput
 import com.broxus.huckster.logger2
 import com.broxus.huckster.notifiers.Notifier
 import com.broxus.nova.client.NovaApiService
+import com.broxus.nova.models.AccountBalance
 import com.broxus.utils.green
 import com.broxus.utils.red
 import com.broxus.utils.yellow
 import kotlinx.coroutines.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.MessageFormat
 import java.util.*
 import kotlin.system.exitProcess
@@ -45,12 +48,19 @@ class BasicStrategy(
 
                 //  Get balance for specific currency from the list of all available ones
                 var availableBalance: Float? = null
-
-                NovaApiService.getSpecificUserBalance(
+                val balances = NovaApiService.getSpecificUserBalance(
                     strategy.account.userAddress,
                     strategy.account.addressType,
                     strategy.account.workspaceId
-                )?.forEach {
+                )
+                val numberFormat = DecimalFormat("#,##0.00####").apply {
+                    decimalFormatSymbols = DecimalFormatSymbols().apply {
+                        decimalSeparator = '.'
+                        groupingSeparator = ' '
+                    }
+                }
+
+                balances?.forEach {
                     if (it.currency == strategy.configuration.sourceCurrency) {
                         availableBalance = it.available.toFloat()
                         return@forEach
@@ -72,7 +82,7 @@ class BasicStrategy(
                             Locale.ENGLISH
                         ).format(
                             arrayOf(
-                                availableBalance ?: 0.0F,
+                                numberFormat.format(availableBalance ?: 0.0F),
                                 strategy.configuration.sourceCurrency,
                                 strategy.account.userAddress,
                                 strategy.account.addressType,
@@ -107,13 +117,20 @@ class BasicStrategy(
                                 Locale.ENGLISH
                             ).format(
                                 arrayOf(
-                                    availableBalance,
-                                    strategy.configuration.sourceCurrency
+                                    numberFormat.format(availableBalance ?: 0.0F),
+                                    strategy.configuration.sourceCurrency,
+                                    (balances?.
+                                        filter{ it.currency != strategy.configuration.sourceCurrency }?.
+                                        joinToString("\n"){
+                                            it.currency + ": " +
+                                            numberFormat.format(it.available.toFloat()).trim() +
+                                            " (" + numberFormat.format(it.available.toFloat()).trim() + ")"
+                                        } ?: "No other balances")
                                 )
                             )
 
                             logger2(message.green())
-                            Notifier()?.info("message", "Huckster")
+                            Notifier()?.info(message, "Huckster")
                         }
 
                         (!strategy.configuration.notification?.soft.isNullOrEmpty() &&
@@ -130,7 +147,7 @@ class BasicStrategy(
                                 Locale.ENGLISH
                             ).format(
                                 arrayOf(
-                                    availableBalance ?: 0.0F,
+                                    numberFormat.format(availableBalance ?: 0.0F),
                                     strategy.configuration.sourceCurrency,
                                     strategy.account.userAddress,
                                     strategy.account.addressType,
@@ -168,7 +185,7 @@ class BasicStrategy(
                             Locale.ENGLISH
                         ).format(
                             arrayOf(
-                                (availableBalance ?: 0.0F),
+                                numberFormat.format(availableBalance ?: 0.0F),
                                 strategy.configuration.sourceCurrency
                             )
                         ),
