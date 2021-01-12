@@ -23,7 +23,11 @@
 				"offset": "15"
 			}
 		],
-		"minOrderSize": "0.1"
+		"minOrderSize": "0.1",
+		"notification": {
+			"soft": "0.1",
+			"hard": "0.01"
+		}
 	},
 	"strategies": [
 		{

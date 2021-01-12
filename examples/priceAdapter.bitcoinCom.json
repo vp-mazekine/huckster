@@ -1,0 +1,15 @@
+{
+	"adapter": "bitcoin.com",
+	"configuration": {
+		"apiPath": "https://api.exchange.bitcoin.com/api/2/",
+		"refreshRate": 10,
+		"symbols": [
+			"BTCUSD",
+			"ETHUSD",
+			"ETHBTC"
+		],
+		"dictionary": {
+			"USDT": "USD"
+		}
+	}
+}

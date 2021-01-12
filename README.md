@@ -32,6 +32,7 @@ java -jar ./huckster.jar [JOB] [PARAMS]
 * `-s, --strategy <FILE>`<br/>Orders placement strategy configuration
 * `-pad, --priceAdapter <FILE>`<br/>Price adapter configuration
 * `-pau, --priceAuth <FILE>`<br/>Price adapter authentication file \[optional, adapter-dependent\]
+* `--notify, -n <FILE>`<br/>Notifier configuration file [optional]
 
 #### `orderbook` job
 * `-p, --pair <PAIR>`<br/>
@@ -58,5 +59,14 @@ See [examples](examples) folder for samples of strategy configuration files.
 
 * `googleSheet`<br/>
   Sources price feed from a Google Sheet. Requires [OAuth 2.0 file](https://developers.google.com/identity/protocols/oauth2) downloaded from [Google Developer Account](https://console.developers.google.com/).
+  
+* `bitcoin.com`<br/>
+  Gets price feed from Bitcoin.com exchange
 
 See [examples](examples) folder for samples of price feed configuration files.
+
+### Supported notifiers
+* `telegram`<br/>
+  Uses credentials of a Telegram bot to push notifications to private and public chats.</br>
+  
+See [examples](examples) folder for configuration samples.

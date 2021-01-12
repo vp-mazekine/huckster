@@ -1,0 +1,11 @@
+{
+	"adapter": "telegram",
+	"auth": {
+		"bot_id": "<TELEGRAM_ID>",
+		"api_key": "<API_KEY>"
+	},
+	"subscribers": [
+		"123456",
+		"987654321"
+	]
+}
