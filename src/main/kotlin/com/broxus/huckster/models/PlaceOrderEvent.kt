@@ -1,6 +1,7 @@
 package com.broxus.huckster.models
 
 import com.broxus.huckster.interfaces.QueueEvent
+import com.broxus.nova.models.SelfTradingPrevention
 import com.broxus.nova.types.AddressType
 
 data class PlaceOrderEvent(
@@ -12,6 +13,7 @@ data class PlaceOrderEvent(
     val fromCurrency: String,
     val toCurrency: String,
     val applicationId: String?,
+    val selfTradingPrevention: SelfTradingPrevention?,
     val initialDelay: Long,
     val cancelDelay: Long
 ): QueueEvent

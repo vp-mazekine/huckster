@@ -6,14 +6,16 @@ import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.network.fold
-import org.slf4j.LoggerFactory
+//import org.apache.logging.log4j.kotlin.logger
+import org.apache.logging.log4j.LogManager
 import java.lang.Exception
 import java.text.MessageFormat
 import java.util.*
 
 class TelegramBotAdapter(private val config: TelegramBotConfig): Notifier {
     private var bot: Bot? = null
-    private val logger by lazy { LoggerFactory.getLogger(TelegramBotAdapter::class.java) }
+    //private val logger by lazy { this.logger() }
+    private val logger by lazy { LogManager.getLogger(this::class.java) }
 
     override fun info(message: String, header: String?) {
         notify(message,

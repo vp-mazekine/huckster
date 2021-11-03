@@ -7,27 +7,38 @@ import com.broxus.huckster.notifiers.models.TelegramBotConfig
 import com.broxus.huckster.prices.adapters.BitcoinComRates
 import com.broxus.huckster.prices.adapters.FixedRate
 import com.broxus.huckster.prices.adapters.GoogleSheetRates
-import com.broxus.huckster.prices.models.FixedRateInput
 import com.broxus.huckster.strategies.BasicStrategy
 import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.models.ApiConfig
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import com.broxus.utils.*
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import io.sentry.Sentry
 import kotlinx.coroutines.runBlocking
+//import org.apache.logging.log4j.kotlin.logger
+import org.apache.logging.log4j.LogManager
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
 import java.time.LocalDateTime.now
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
+    val logger = LogManager.getLogger("main")
+    Sentry.init("https://d7aa38bbc9764245b7aee22de10993b6@sentry.dexpa.io/18")
+
+    try {
+        throw Exception("This is a test.")
+    } catch (e: Exception) {
+        logger.error(e)
+        Sentry.captureException(e)
+        //Sentry.capture(e)
+    }
+
     var command = ""
     var keysPath = ""
     var strategyPath = ""
@@ -37,7 +48,7 @@ fun main(args: Array<String>) {
     var base = ""
     var counter = ""
     var refreshInterval = 30
-    val version = "0.3 rev.2"
+    val version = "0.3 rev.5"
 
     val greeting =
         "                                                                  \n" +
@@ -392,4 +403,5 @@ fun main(args: Array<String>) {
 
 fun logger2(message: Any?) {
     println("[" + now().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)) + "] --> $message")
+    //message?.let {logger("logger2").error(it)}
 }

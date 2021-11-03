@@ -7,8 +7,8 @@ import com.broxus.nova.models.ExchangeOrderBook
 import com.broxus.nova.types.OrderSideType
 import com.broxus.utils.*
 import kotlinx.coroutines.delay
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+//import org.apache.logging.log4j.kotlin.logger
+import org.apache.logging.log4j.LogManager
 import java.lang.Integer.max
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -16,9 +16,11 @@ import java.text.DecimalFormatSymbols
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
+
 object OrdersQueue: OrdersQueue {
     private var api: NovaApiService? = null
-    private val logger: Logger = LoggerFactory.getLogger(NovaApiService::class.java)
+    //private val logger by lazy { this.logger() }
+    private val logger by lazy { LogManager.getLogger(this::class.java) }
 
     override suspend fun enqueue(event: PlaceOrderEvent, threadId: Int?) {
         //  Shifted execution
@@ -33,13 +35,18 @@ object OrdersQueue: OrdersQueue {
             event.toCurrency,
             event.fromAmount,
             event.toAmount,
-            event.applicationId
+            event.applicationId,
+            event.selfTradingPrevention
         )?.let {
 
+            val message = "[$threadId] Order ${it.transactionId}: ".recolorByThread(threadId) +
+                    "${event.fromAmount} ${event.fromCurrency} --> ${event.toAmount} ${event.toCurrency} " +
+                    "[1 ${event.fromCurrency} = ${(event.toAmount.toFloat() / event.fromAmount.toFloat())} ${event.toCurrency}]".blue()
+
+            logger.info(message)
+
             logger2(
-                "[$threadId] Order ${it.transactionId}: ".recolorByThread(threadId) +
-                "${event.fromAmount} ${event.fromCurrency} --> ${event.toAmount} ${event.toCurrency} " +
-                "[1 ${event.fromCurrency} = ${(event.toAmount.toFloat() / event.fromAmount.toFloat())} ${event.toCurrency}]".blue()
+                message
             )
             delay(event.cancelDelay)
 
@@ -329,7 +336,7 @@ object OrdersQueue: OrdersQueue {
      * @param to Currency ticker
      * @return OrderSideType or null in case of error
      */
-    fun orderSide(from: String, to: String): OrderSideType? {
+    private fun orderSide(from: String, to: String): OrderSideType? {
         NovaApiService.getCurrenciesPairs()?.forEach {pair ->
             when {
                 (pair.base == from && pair.counter == to) -> return OrderSideType.sell

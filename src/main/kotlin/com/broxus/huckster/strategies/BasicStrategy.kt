@@ -9,10 +9,13 @@ import com.broxus.huckster.logger2
 import com.broxus.huckster.notifiers.Notifier
 import com.broxus.nova.client.NovaApiService
 import com.broxus.nova.models.AccountBalance
+import com.broxus.nova.models.SelfTradingPrevention
 import com.broxus.utils.green
 import com.broxus.utils.red
 import com.broxus.utils.yellow
 import kotlinx.coroutines.*
+//import org.apache.logging.log4j.kotlin.logger
+import org.apache.logging.log4j.LogManager
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.MessageFormat
@@ -23,6 +26,8 @@ class BasicStrategy(
     val strategy: StrategyInput,
     val priceAdapter: PriceFeed
 ): Strategy {
+
+    val logger by lazy { LogManager.getLogger(this::class.java) }
 
     override suspend fun run() {
         var offsetPart: Float?
@@ -48,6 +53,7 @@ class BasicStrategy(
 
                 //  Get balance for specific currency from the list of all available ones
                 var availableBalance: Float? = null
+                var totalBalance: Float? = null
                 val balances = NovaApiService.getSpecificUserBalance(
                     strategy.account.userAddress,
                     strategy.account.addressType,
@@ -63,7 +69,36 @@ class BasicStrategy(
                 balances?.forEach {
                     if (it.currency == strategy.configuration.sourceCurrency) {
                         availableBalance = it.available.toFloat()
+                        totalBalance = it.total.toFloat()
                         return@forEach
+                    }
+                }
+
+                //  Check that orders has not stuck after the resetting
+                strategy.configuration.faultTolerance?.let {ft ->
+                    if(
+                        totalBalance != null &&
+                        totalBalance!! > 0.0F &&
+                        availableBalance != null
+                    ) {
+                        if(availableBalance!! <= (totalBalance!! * ft)) {
+                            val errorMessage =
+                                MessageFormat(
+                                    ResourceBundle.getBundle("messages", Locale.ENGLISH).getString("strategy.basic.inconsistent_balance"),
+                                    Locale.ENGLISH
+                                ).format(
+                                    arrayOf(
+                                        strategy.configuration.sourceCurrency,
+                                        numberFormat.format(availableBalance ?: 0.0F),
+                                        numberFormat.format(totalBalance!! - availableBalance!!),
+                                        numberFormat.format(totalBalance ?: 0.0F)
+                                    )
+                                )
+
+                            logger.error(errorMessage.red())
+                            logger2(errorMessage.red())
+                            Notifier()?.error(errorMessage, "Huckster")
+                        }
                     }
                 }
 
@@ -95,6 +130,7 @@ class BasicStrategy(
                                 )?.blockchainAddress
                             )
                         )
+                    logger.error(errorMessage.red())
                     logger2(errorMessage.red())
                     Notifier()?.error(errorMessage, "Huckster")
                     return@launch
@@ -117,14 +153,14 @@ class BasicStrategy(
                                 Locale.ENGLISH
                             ).format(
                                 arrayOf(
-                                    numberFormat.format(availableBalance ?: 0.0F),
                                     strategy.configuration.sourceCurrency,
+                                    numberFormat.format(availableBalance ?: 0.0F).trim(),
                                     (balances?.
-                                        filter{ it.currency != strategy.configuration.sourceCurrency }?.
+                                        filter{ it.total.toFloat() > 0.0F }?.
                                         joinToString("\n"){
                                             it.currency + ": " +
                                             numberFormat.format(it.available.toFloat()).trim() +
-                                            " (" + numberFormat.format(it.available.toFloat()).trim() + ")"
+                                            " (" + numberFormat.format(it.total.toFloat()).trim() + ")"
                                         } ?: "No other balances")
                                 )
                             )
@@ -163,6 +199,7 @@ class BasicStrategy(
                                 )
                             )
 
+                            logger.warn(message)
                             logger2(message.yellow())
                             Notifier()?.warning(message, "Huckster")
                         }
@@ -178,6 +215,9 @@ class BasicStrategy(
                 }
 
                 logger2("Available balance: ".green() + "${availableBalance!!} ${strategy.configuration.sourceCurrency}")
+                logger2("Pausing for 3 seconds before launching MM...".green())
+                delay(3000)
+
                 if(restartNotification) {
                     Notifier()?.info(
                         MessageFormat(
@@ -241,6 +281,7 @@ class BasicStrategy(
                                 strategy.configuration.sourceCurrency,
                                 s.targetCurrency,
                                 "Huckster MarketMaker",
+                                SelfTradingPrevention.CancelOldest,
                                 (offset.offset.toFloat() * 1000).toLong(),
                                 (strategy.configuration.refreshInterval.soft.toFloat() * 1000).toLong()
                             )

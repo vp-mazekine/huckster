@@ -21,5 +21,6 @@ data class Configuration(
     @Expose val refreshInterval: RefreshInterval,
     @Expose val sourceCurrency: String,
     @Expose val volumeLimit: String,
-    @Expose val notification: NotificationConfig?
+    @Expose val notification: NotificationConfig?,
+    @Expose val faultTolerance: Float? = null
 )

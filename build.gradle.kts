@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.broxus"
-version = "0.3.3"
+version = "0.3.5"
 
 repositories {
     mavenCentral()
@@ -19,7 +19,7 @@ repositories {
     maven { url = uri("https://jitpack.io") }
 }
 
-val novaLibVersion = "0.0.6-alpha"
+val novaLibVersion = "0.0.7-alpha"
 val arrowVersion = "0.11.0"
 val telegramBotVersion = "6.0.1"
 
@@ -40,10 +40,11 @@ dependencies {
     kapt("io.arrow-kt:arrow-meta:$arrowVersion")
 
     //  Logging
-    implementation("org.slf4j:slf4j-api:1.7.30")
+    implementation("org.apache.logging.log4j:log4j-api:2.14.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.14.0")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("ch.qos.logback:logback-core:1.2.3")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.51")
+    implementation("io.sentry:sentry-log4j2:4.1.0")
 
     //  Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1")

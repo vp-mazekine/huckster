@@ -32,7 +32,7 @@ java -jar ./huckster.jar [JOB] [PARAMS]
 * `-s, --strategy <FILE>`<br/>Orders placement strategy configuration
 * `-pad, --priceAdapter <FILE>`<br/>Price adapter configuration
 * `-pau, --priceAuth <FILE>`<br/>Price adapter authentication file \[optional, adapter-dependent\]
-* `--notify, -n <FILE>`<br/>Notifier configuration file [optional]
+* `-n, --notify <FILE>`<br/>Notifier configuration file [optional]
 
 #### `orderbook` job
 * `-p, --pair <PAIR>`<br/>

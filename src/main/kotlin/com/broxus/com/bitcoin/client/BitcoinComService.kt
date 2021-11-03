@@ -18,8 +18,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -29,7 +28,7 @@ object BitcoinComService {
     private var api: BitcoinComInterface? = null
     private var apiConfig: BitcoinComConfiguration? = null
     private var gson: Gson? = null
-    private val logger: Logger = LoggerFactory.getLogger(BitcoinComService::class.java)
+    private val logger = LogManager.getLogger(this::class.java)
 
     fun init(config: BitcoinComConfiguration) {
         val retrofit = Retrofit.Builder()
