@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" packages="org.apache.logging.log4j.core,io.sentry.log4j2">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] %c{1.} --> %highlight{%level{length=1}: %msg%n%throwable}{}" disableAnsi="false"/>
+        </Console>
+        <Sentry name="Sentry"
+                dsn="https://d7aa38bbc9764245b7aee22de10993b6@sentry.dexpa.io/18"
+                minimumBreadcrumbLevel="INFO"
+                minimumEventLevel="WARN"
+        />
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Sentry"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -6,6 +6,7 @@ import com.broxus.huckster.notifiers.adapters.TelegramBotAdapter
 import com.broxus.huckster.notifiers.models.TelegramBotConfig
 import com.broxus.huckster.prices.adapters.BitcoinComRates
 import com.broxus.huckster.prices.adapters.FixedRate
+import com.broxus.huckster.prices.adapters.GateIoRates
 import com.broxus.huckster.prices.adapters.GoogleSheetRates
 import com.broxus.huckster.strategies.BasicStrategy
 import com.broxus.nova.client.NovaApiService
@@ -28,9 +29,12 @@ import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    val logger = LogManager.getLogger("main")
+    System.setProperty("log4j.configurationFile", "./log4j2.xml")
+
+    //val logger = LogManager.getLogger("main")
     Sentry.init("https://d7aa38bbc9764245b7aee22de10993b6@sentry.dexpa.io/18")
 
+/*
     try {
         throw Exception("This is a test.")
     } catch (e: Exception) {
@@ -38,6 +42,7 @@ fun main(args: Array<String>) {
         Sentry.captureException(e)
         //Sentry.capture(e)
     }
+*/
 
     var command = ""
     var keysPath = ""
@@ -48,7 +53,7 @@ fun main(args: Array<String>) {
     var base = ""
     var counter = ""
     var refreshInterval = 30
-    val version = "0.3 rev.5"
+    val version = "0.4-RC1"
 
     val greeting =
         "                                                                  \n" +
@@ -357,14 +362,9 @@ fun main(args: Array<String>) {
                         if(!File(priceAuthPath).exists()) throw(Exception("Authentication file for Google Sheet price adapter doesn't exist. Terminating now..."))
                         GoogleSheetRates(priceFeedConfiguration, priceAuthPath)
                     }
-                    "bitcoin.com"   ->
-                    {
-                        BitcoinComRates(priceFeedConfiguration)
-                    }
-                    else            ->
-                    {
-                        throw(Exception("Unknown price adapter (${priceFeedConfiguration["adapter"]}). Terminating now..."))
-                    }
+                    "bitcoin.com"   -> BitcoinComRates(priceFeedConfiguration)
+                    "gate.io"       -> GateIoRates(priceFeedConfiguration)
+                    else            -> throw(Exception("Unknown price adapter (${priceFeedConfiguration["adapter"]}). Terminating now..."))
                 }
             } catch(e: Exception) {
                 logger2(e.message?.red() + "\n" + e.stackTrace.joinToString("\n").red())

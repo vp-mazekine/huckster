@@ -1,6 +1,6 @@
 package com.broxus.huckster.prices.adapters
 
-import com.broxus.huckster.interfaces.PriceFeed
+import com.broxus.huckster.interfaces.IPriceFeed
 import com.broxus.huckster.prices.models.FixedRateInput
 import com.broxus.huckster.prices.models.Rate
 import com.google.gson.Gson
@@ -11,7 +11,7 @@ import java.io.IOException
 /**
  * Adapter for fixed rates configuration
  */
-class FixedRate(feedConfiguration: JsonObject) : PriceFeed {
+class FixedRate(feedConfiguration: JsonObject) : IPriceFeed {
     private var rates: MutableList<Rate> = mutableListOf()
 
     init {

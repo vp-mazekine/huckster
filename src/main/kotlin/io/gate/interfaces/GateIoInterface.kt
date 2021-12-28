@@ -1,14 +1,14 @@
-package com.broxus.com.bitcoin.client.interfaces
+package io.gate.interfaces
 
-import com.broxus.com.bitcoin.types.CandlesPeriods
-import com.broxus.com.bitcoin.types.SortingOrder
+import com.bitcoin.types.CandlesPeriods
+import com.bitcoin.types.SortingOrder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import retrofit2.Call
 import retrofit2.http.*
 import java.time.OffsetDateTime
 
-interface BitcoinComInterface {
+interface GateIoInterface {
     @GET("public/candles")
     fun getCandles(
         @Query("period") period: CandlesPeriods?,

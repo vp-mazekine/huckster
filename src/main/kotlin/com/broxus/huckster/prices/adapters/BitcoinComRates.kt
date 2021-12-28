@@ -1,9 +1,8 @@
 package com.broxus.huckster.prices.adapters
 
-import com.broxus.com.bitcoin.client.BitcoinComService
-import com.broxus.huckster.interfaces.PriceFeed
-import com.broxus.com.bitcoin.models.BitcoinComInput
-import com.broxus.com.bitcoin.models.Candle
+import com.bitcoin.client.BitcoinComService
+import com.broxus.huckster.interfaces.IPriceFeed
+import com.bitcoin.models.BitcoinComInput
 import com.broxus.huckster.logger2
 import com.broxus.huckster.prices.models.Rate
 import com.broxus.utils.red
@@ -11,7 +10,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import java.io.IOException
 
-class BitcoinComRates(feedConfiguration: JsonObject): PriceFeed {
+class BitcoinComRates(feedConfiguration: JsonObject): IPriceFeed {
     private val FEED_CONFIGURATION: BitcoinComInput
 
     private var rates: MutableList<Rate> = mutableListOf()
@@ -42,14 +41,14 @@ class BitcoinComRates(feedConfiguration: JsonObject): PriceFeed {
 
         orderBook?.forEach {key, value ->
             symbols?.filter{ it.id == key }?.let {symbol ->
-                i = rates.findIndex(
+                i = rates.findRateIndex(
                     symbol[0].baseCurrency, symbol[0].quoteCurrency
                 )
 
                 try {
                     r = Rate(
-                        symbol[0].baseCurrency,
-                        symbol[0].quoteCurrency,
+                        if(i == null || i!! > 0) symbol[0].baseCurrency else symbol[0].quoteCurrency,
+                        if(i == null || i!! > 0) symbol[0].quoteCurrency else symbol[0].baseCurrency,
                         (value.ask[0].price.toFloat() + value.bid[0].price.toFloat()) / 2
                         )
                 } catch (e: Exception) {
@@ -91,6 +90,7 @@ class BitcoinComRates(feedConfiguration: JsonObject): PriceFeed {
         return null
     }
 
+/*
     private fun MutableList<Rate>.findIndex(fromCurrency: String, toCurrency: String): Int? {
         this.forEachIndexed { index, rate ->
             if(rate.fromCurrency == fromCurrency && rate.toCurrency == toCurrency) return index
@@ -98,5 +98,6 @@ class BitcoinComRates(feedConfiguration: JsonObject): PriceFeed {
 
         return null
     }
+*/
 
 }

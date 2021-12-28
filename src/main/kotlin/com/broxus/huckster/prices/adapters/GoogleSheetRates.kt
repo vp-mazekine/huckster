@@ -1,6 +1,6 @@
 package com.broxus.huckster.prices.adapters
 
-import com.broxus.huckster.interfaces.PriceFeed
+import com.broxus.huckster.interfaces.IPriceFeed
 import com.broxus.huckster.logger2
 import com.broxus.huckster.prices.models.GoogleSheetInput
 import com.broxus.huckster.prices.models.Rate
@@ -21,7 +21,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): PriceFeed {
+class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): IPriceFeed {
     private val HTTP_TRANSPORT by lazy { GoogleNetHttpTransport.newTrustedTransport() }
     private val JSON_FACTORY by lazy { JacksonFactory.getDefaultInstance() }
     private val TOKENS_DIRECTORY_PATH = "tokens"
@@ -113,11 +113,15 @@ class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): Pri
                         fromCurrency = row[0].toString()
                         toCurrency = row[1].toString()
 
-                        i = rates.findIndex(
+                        i = rates.findRateIndex(
                             fromCurrency, toCurrency
                         )
 
-                        r = Rate(fromCurrency, toCurrency, rate!!)
+                        r = Rate(
+                            if(i == null || i!! > 0) fromCurrency else toCurrency,
+                            if(i == null || i!! > 0) toCurrency else fromCurrency,
+                            rate!!
+                        )
 
                         when(i) {
                             null -> rates.add(r)
@@ -129,13 +133,15 @@ class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): Pri
         }
     }
 
-    private fun MutableList<Rate>.findIndex(fromCurrency: String, toCurrency: String): Int? {
+/*
+    private fun MutableList<Rate>.findRateIndex(fromCurrency: String, toCurrency: String): Int? {
         this.forEachIndexed { index, rate ->
             if(rate.fromCurrency == fromCurrency && rate.toCurrency == toCurrency) return index
         }
 
         return null
     }
+*/
 
     /**
      * As per Google manual https://developers.google.com/sheets/api/quickstart/java
@@ -145,7 +151,7 @@ class GoogleSheetRates(feedConfiguration: JsonObject, authDataPath: String): Pri
     @Throws(IOException::class)
     private fun getCredentials(): Credential {
         if(!File(AUTH_DATA_PATH).exists()) {
-            throw FileNotFoundException("Authentication data file not found: $AUTH_DATA_PATH");
+            throw FileNotFoundException("Authentication data file not found: $AUTH_DATA_PATH")
         }
 
         val clientSecrets = GoogleClientSecrets.load(

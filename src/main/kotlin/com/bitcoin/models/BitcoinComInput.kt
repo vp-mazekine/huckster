@@ -1,4 +1,4 @@
-package com.broxus.com.bitcoin.models
+package com.bitcoin.models
 
 import com.google.gson.annotations.Expose
 

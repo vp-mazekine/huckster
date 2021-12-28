@@ -1,34 +1,28 @@
-package com.broxus.com.bitcoin.client
+package com.bitcoin.client
 
 import arrow.core.Either
-import arrow.core.Left
-import arrow.core.Right
-import com.broxus.com.bitcoin.client.interfaces.BitcoinComInterface
-import com.broxus.com.bitcoin.models.BitcoinComConfiguration
-import com.broxus.com.bitcoin.models.Candle
-import com.broxus.com.bitcoin.models.OrderBook
-import com.broxus.com.bitcoin.models.Symbol
-import com.broxus.com.bitcoin.types.CandlesPeriods
-import com.broxus.com.bitcoin.types.SortingOrder
+import com.bitcoin.client.interfaces.BitcoinComInterface
+import com.bitcoin.models.BitcoinComConfiguration
+import com.bitcoin.models.Candle
+import com.bitcoin.models.OrderBook
+import com.bitcoin.models.Symbol
+import com.bitcoin.types.CandlesPeriods
+import com.bitcoin.types.SortingOrder
+import com.broxus.huckster.interfaces.Unfoldable
 import com.broxus.huckster.logger2
-import com.broxus.utils.ErrorDescription
 import com.broxus.utils.red
-import com.google.gson.Gson
 import com.google.gson.JsonArray
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.google.gson.reflect.TypeToken
-import org.apache.logging.log4j.LogManager
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.ZonedDateTime
 
-object BitcoinComService {
+object BitcoinComService : Unfoldable() {
     private var api: BitcoinComInterface? = null
     private var apiConfig: BitcoinComConfiguration? = null
-    private var gson: Gson? = null
-    private val logger = LogManager.getLogger(this::class.java)
+    //private var gson: Gson? = null
+    //private val logger = LogManager.getLogger(this::class.java)
 
     fun init(config: BitcoinComConfiguration) {
         val retrofit = Retrofit.Builder()
@@ -38,7 +32,7 @@ object BitcoinComService {
 
         this.api = retrofit.create(BitcoinComInterface::class.java)
         this.apiConfig = config
-        this.gson = Gson()
+        //this.gson = Gson()
     }
 
     fun getCandles(
@@ -81,13 +75,13 @@ object BitcoinComService {
                         is JsonArray -> {
                             it[key].asJsonArray.forEach {symbol ->
                                 tempList.add(
-                                    this.gson!!.fromJson(symbol, Candle::class.java)
+                                    this.gson.fromJson(symbol, Candle::class.java)
                                 )
                             }
                         }
                         else -> {
                             tempList.add(
-                                this.gson!!.fromJson(it[key], Candle::class.java)
+                                this.gson.fromJson(it[key], Candle::class.java)
                             )
                         }
                     }
@@ -155,7 +149,7 @@ object BitcoinComService {
 
         response.body()?.let {
             it.keySet().forEach { key ->
-                result[key] = gson!!.fromJson(it[key], OrderBook::class.java)
+                result[key] = gson.fromJson(it[key], OrderBook::class.java)
             }
         }
 
@@ -170,6 +164,7 @@ object BitcoinComService {
      * @param t Expected response type's class
      * @return Either<ErrorDescription, T>
      */
+/*
     private inline fun <reified T> unfoldResponse(
         r: Response<out JsonElement>,
         t: Class<T>
@@ -218,6 +213,7 @@ object BitcoinComService {
             )
         }
     }
+*/
 
     /**
      * Transform the returned LinkedTreeMap to the desired type
@@ -225,6 +221,7 @@ object BitcoinComService {
      * @param T Type to cast
      * @return List<T>
      */
+/*
     private inline fun <reified T> List<*>.castJsonArrayToType(): List<T> {
         val result: MutableList<T> = mutableListOf()
         val t = object : TypeToken<T>() {}.type
@@ -241,5 +238,6 @@ object BitcoinComService {
 
         return result.toList()
     }
+*/
 
 }

@@ -1,14 +1,13 @@
 package com.broxus.huckster.strategies
 
 import com.broxus.huckster.OrdersQueue
-import com.broxus.huckster.interfaces.PriceFeed
+import com.broxus.huckster.interfaces.IPriceFeed
 import com.broxus.huckster.interfaces.Strategy
 import com.broxus.huckster.models.PlaceOrderEvent
 import com.broxus.huckster.models.StrategyInput
 import com.broxus.huckster.logger2
 import com.broxus.huckster.notifiers.Notifier
 import com.broxus.nova.client.NovaApiService
-import com.broxus.nova.models.AccountBalance
 import com.broxus.nova.models.SelfTradingPrevention
 import com.broxus.utils.green
 import com.broxus.utils.red
@@ -20,15 +19,15 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.MessageFormat
 import java.util.*
-import kotlin.system.exitProcess
 
 class BasicStrategy(
     val strategy: StrategyInput,
-    val priceAdapter: PriceFeed
+    val priceAdapter: IPriceFeed
 ): Strategy {
 
     val logger by lazy { LogManager.getLogger(this::class.java) }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun run() {
         var offsetPart: Float?
         var currencyPart: Float?

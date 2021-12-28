@@ -1,4 +1,4 @@
-package com.broxus.com.bitcoin.types
+package com.bitcoin.types
 
 enum class SortingOrder {
     ASC, DESC
